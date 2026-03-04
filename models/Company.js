@@ -28,7 +28,7 @@ const companySchema = new mongoose.Schema({
     countryCode: {
         type: String,
         required: [true, 'Country code is required'],
-        match: [/^[0-9]{1,3}$/, 'Country code must be 1-3 digits']
+        match: [/^[A-Z]{2,3}$/, 'Country code must be a valid 2-3 letter ISO code (e.g. IN, US)']
     },
     dialCode: {
         type: String,
@@ -38,7 +38,7 @@ const companySchema = new mongoose.Schema({
     alternateContact: { type: String },
     alternateCountryCode: {
         type: String,
-        match: [/^[0-9]{1,3}$/, 'Country code must be 1-3 digits']
+        match: [/^[A-Z]{2,3}$/, 'Country code must be a valid 2-3 letter ISO code (e.g. IN, US)']
     },
     alternateDialCode: {
         type: String,
