@@ -1,0 +1,23 @@
+const express = require('express');
+const router = express.Router();
+const authRoutes = require('./authRoutes');
+const companyRoutes = require('./companyRoutes');
+const subscriptionRoutes = require('./subscriptionRoutes');
+const notificationRoutes = require('./notificationRoutes');
+const enquiryRoutes = require('./enquiryRoutes');
+const faceRoutes = require('./face.routes');
+const authEmployeeRoutes = require('./authEmployee.routes');
+const dashboardRoutes = require('./dashboardRoutes');
+const subscriptionPlanRoutes = require('./subscriptionPlanRoutes');
+
+router.use('/auth', authRoutes);
+router.use('/companies', companyRoutes);
+router.use('/subscriptions', subscriptionRoutes);
+router.use('/subscription-plans', subscriptionPlanRoutes);
+router.use('/notifications', notificationRoutes);
+router.use('/enquiries', enquiryRoutes);
+router.use('/faces', faceRoutes);
+router.use('/auth-employee', authEmployeeRoutes);
+router.use('/dashboard', dashboardRoutes);
+
+module.exports = router;
