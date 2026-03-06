@@ -55,6 +55,8 @@ exports.getAllCompanies = async (req, res) => {
             {
                 $addFields: {
                     subscriptionType: '$subscription.subscriptionType',
+                    validTill: '$subscription.validTill',
+                    subscriptionStatus: '$subscription.status',
                     totalSubscriptions: {
                         $add: [
                             { $ifNull: ['$subscription.subscriptionType.subscriptionTypeBasic', 0] },
