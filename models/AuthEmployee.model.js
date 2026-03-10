@@ -30,12 +30,6 @@ const authEmployeeSchema = new mongoose.Schema(
         },
 
         // Basic Info
-        employeeId: {
-            type: String,
-            required: true,
-            unique: true
-        },
-
         fullName: {
             type: String,
             required: true,
@@ -117,6 +111,6 @@ const authEmployeeSchema = new mongoose.Schema(
 );
 
 // Index for faster search
-authEmployeeSchema.index({ employeeId: 1, email: 1 });
+authEmployeeSchema.index({ email: 1 });
 
 module.exports = mongoose.model("AuthEmployee", authEmployeeSchema);

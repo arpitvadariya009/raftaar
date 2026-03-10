@@ -40,6 +40,20 @@ const upload = multer({
 router.post('/register', upload.single('image'), authEmployeeController.registerEmployee);
 
 /**
+ * @route   POST /api/auth-employee/create
+ * @desc    Create a new employee (Subscription-aware)
+ * @access  Private/Public
+ */
+router.post('/create', upload.single('image'), authEmployeeController.createEmployee);
+
+/**
+ * @route   POST /api/auth-employee/:id/image
+ * @desc    Upload or update employee face image
+ * @access  Private/Public
+ */
+router.post('/:id/image', upload.single('image'), authEmployeeController.uploadEmployeeImage);
+
+/**
  * @route   GET /api/auth-employee/all
  * @desc    Get all employees with pagination
  * @access  Public

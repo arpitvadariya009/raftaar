@@ -93,6 +93,150 @@ exports.registerEmployee = async (req, res) => {
 };
 
 /**
+ * Create a new employee (Subscription-aware, image optional)
+ * POST /api/auth-employee/create
+ * Body: { company, employeeId, fullName, email, ...other employee details }
+ * File: image (multipart/form-data) [optional]
+ */
+exports.createEmployee = async (req, res) => {
+    try {
+        const {
+            company, fullName, fatherName, dateOfBirth, gender,
+            email, mobileNumber, emergencyContact, address,
+            dateOfJoining, department, designation, reportingHead, skillType, grossSalary
+        } = req.body;
+        const imageFile = req.file;
+
+        if (!company || !fullName || !email || !mobileNumber || !address || !dateOfBirth || !dateOfJoining || !department || !designation || !grossSalary) {
+            if (imageFile && fs.existsSync(imageFile.path)) fs.unlinkSync(imageFile.path);
+            return res.status(400).json(formatResponse(false, 'Required fields are missing'));
+        }
+
+        // Subscription Validation
+        const Subscription = require('../models/Subscription');
+        const activeSubscription = await Subscription.findOne({ company, status: 'Active' });
+
+        if (!activeSubscription) {
+            if (imageFile && fs.existsSync(imageFile.path)) fs.unlinkSync(imageFile.path);
+            return res.status(403).json(formatResponse(false, 'No active subscription found for this company'));
+        }
+
+        const basicCount = activeSubscription.subscriptionType.subscriptionTypeBasic || 0;
+        const proCount = activeSubscription.subscriptionType.subscriptionTypePro || 0;
+        const totalAllowed = basicCount + proCount;
+
+        const currentEmployeeCount = await AuthEmployee.countDocuments({ company, isActive: true });
+
+        if (currentEmployeeCount >= totalAllowed) {
+            if (imageFile && fs.existsSync(imageFile.path)) fs.unlinkSync(imageFile.path);
+            return res.status(403).json(formatResponse(false, 'Employee creation limit reached based on current subscription'));
+        }
+
+        // Check uniqueness of email
+        const existingEmployee = await AuthEmployee.findOne({ email });
+        if (existingEmployee) {
+            if (imageFile && fs.existsSync(imageFile.path)) fs.unlinkSync(imageFile.path);
+            return res.status(409).json(formatResponse(false, 'Email already exists'));
+        }
+
+        let descriptorArray = undefined;
+        let imagePath = undefined;
+
+        if (imageFile) {
+            const descriptor = await faceService.getFaceDescriptor(imageFile.path);
+            if (!descriptor) {
+                fs.unlinkSync(imageFile.path);
+                return res.status(400).json(formatResponse(false, 'No face detected or multiple faces found in the image'));
+            }
+
+            // Face uniqueness check
+            const allEmployees = await AuthEmployee.find({ descriptor: { $exists: true, $ne: [] } });
+            const threshold = process.env.FACE_SIMILARITY_THRESHOLD || 0.6;
+
+            for (const emp of allEmployees) {
+                const storedDescriptor = new Float32Array(emp.descriptor);
+                const distance = faceService.getEuclideanDistance(descriptor, storedDescriptor);
+                if (distance < threshold) {
+                    fs.unlinkSync(imageFile.path);
+                    return res.status(409).json(formatResponse(false, `Face already registered for another employee`));
+                }
+            }
+            descriptorArray = Array.from(descriptor);
+            imagePath = imageFile.filename;
+        }
+
+        const newEmployee = new AuthEmployee({
+            company, fullName, fatherName, dateOfBirth, gender,
+            email, mobileNumber, emergencyContact, address,
+            dateOfJoining, department, designation, reportingHead, skillType, grossSalary,
+            descriptor: descriptorArray,
+            image: imagePath
+        });
+
+        await newEmployee.save();
+
+        res.status(201).json(formatResponse(true, 'Employee created successfully', newEmployee));
+
+    } catch (error) {
+        if (req.file && fs.existsSync(req.file.path)) fs.unlinkSync(req.file.path);
+        console.error('Create Employee Error:', error);
+        res.status(500).json(formatResponse(false, error.message));
+    }
+};
+
+/**
+ * Upload or update employee face image
+ * POST /api/auth-employee/:id/image
+ * File: image (multipart/form-data)
+ */
+exports.uploadEmployeeImage = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const imageFile = req.file;
+
+        if (!imageFile) {
+            return res.status(400).json(formatResponse(false, 'Image file is required'));
+        }
+
+        const employee = await AuthEmployee.findById(id);
+        if (!employee) {
+            fs.unlinkSync(imageFile.path);
+            return res.status(404).json(formatResponse(false, 'Employee not found'));
+        }
+
+        const descriptor = await faceService.getFaceDescriptor(imageFile.path);
+        if (!descriptor) {
+            fs.unlinkSync(imageFile.path);
+            return res.status(400).json(formatResponse(false, 'No face detected or multiple faces found in the image'));
+        }
+
+        // Face uniqueness check
+        const allEmployees = await AuthEmployee.find({ _id: { $ne: id }, descriptor: { $exists: true, $ne: [] } });
+        const threshold = process.env.FACE_SIMILARITY_THRESHOLD || 0.6;
+
+        for (const emp of allEmployees) {
+            const storedDescriptor = new Float32Array(emp.descriptor);
+            const distance = faceService.getEuclideanDistance(descriptor, storedDescriptor);
+            if (distance < threshold) {
+                fs.unlinkSync(imageFile.path);
+                return res.status(409).json(formatResponse(false, `Face already registered for another employee`));
+            }
+        }
+
+        employee.descriptor = Array.from(descriptor);
+        employee.image = imageFile.filename;
+        await employee.save();
+
+        res.json(formatResponse(true, 'Employee face image uploaded successfully', employee));
+
+    } catch (error) {
+        if (req.file && fs.existsSync(req.file.path)) fs.unlinkSync(req.file.path);
+        console.error('Upload Employee Image Error:', error);
+        res.status(500).json(formatResponse(false, error.message));
+    }
+};
+
+/**
  * Get all employees with pagination
  * GET /api/auth-employee/all
  * Query params: page (default: 1), limit (default: 10)
