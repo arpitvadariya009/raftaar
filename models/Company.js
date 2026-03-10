@@ -1,5 +1,6 @@
 const mongoose = require('mongoose');
 const { generateCompanyCode } = require('../utils/helpers');
+const bcrypt = require('bcryptjs');
 
 const companySchema = new mongoose.Schema({
     companyCode: {
@@ -61,6 +62,15 @@ const companySchema = new mongoose.Schema({
     },
     onboardDate: { type: Date, default: Date.now },
     notificationEnabled: { type: Boolean, default: true },
+    password: {
+        type: String,
+        required: [true, 'Please add a password'],
+        minlength: 6,
+        select: false,
+    },
+    token: {
+        type: String,
+    },
 }, {
     timestamps: true,
     toJSON: { virtuals: true },
@@ -76,12 +86,24 @@ companySchema.virtual('currentSubscription', {
     options: { sort: { createdAt: -1 } }
 });
 
-// Pre-save to auto-generate company code
-companySchema.pre('save', async function () {
+// Pre-save to auto-generate company code and hash password
+companySchema.pre('save', async function (next) {
     if (this.isNew && !this.companyCode) {
         const { generateCompanyCode } = require('../utils/helpers'); // Lazy load to avoid circular deps if any
         this.companyCode = await generateCompanyCode(this.companyName);
     }
+
+    if (this.isModified('password')) {
+        const salt = await bcrypt.genSalt(10);
+        this.password = await bcrypt.hash(this.password, salt);
+    }
+
+    next();
 });
+
+// Match company entered password to hashed password in database
+companySchema.methods.matchPassword = async function (enteredPassword) {
+    return await bcrypt.compare(enteredPassword, this.password);
+};
 
 module.exports = mongoose.model('Company', companySchema);

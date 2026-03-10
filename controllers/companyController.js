@@ -1,6 +1,7 @@
 const asyncHandler = require('express-async-handler');
 const Company = require('../models/Company');
 const Subscription = require('../models/Subscription');
+const jwt = require('jsonwebtoken');
 const { formatResponse } = require('../utils/helpers');
 
 // @desc    Get all customers/companies
@@ -109,6 +110,44 @@ exports.registerCompany = asyncHandler(async (req, res) => {
     try {
         const company = await Company.create(req.body);
         res.status(201).json(formatResponse(true, 'Company registered successfully', company));
+    } catch (error) {
+        res.status(500).json(formatResponse(false, error.message));
+    }
+});
+
+// @desc    Login company
+// @route   POST /api/companies/login
+// @access  Public
+exports.loginCompany = asyncHandler(async (req, res) => {
+    try {
+        const { _id, password } = req.body;
+
+        if (!_id || !password) {
+            res.status(400);
+            throw new Error('Please provide both company _id and password');
+        }
+
+        const company = await Company.findById(_id).select('+password');
+
+        if (company && (await company.matchPassword(password))) {
+            const token = jwt.sign({ id: company._id }, process.env.JWT_SECRET, {
+                expiresIn: '30d',
+            });
+
+            company.token = token;
+            await company.save();
+
+            res.json(formatResponse(true, 'Login successful', {
+                _id: company._id,
+                companyName: company.companyName,
+                companyCode: company.companyCode,
+                hrEmail: company.hrEmail,
+                token: token,
+            }));
+        } else {
+            res.status(401);
+            throw new Error('Invalid credentials');
+        }
     } catch (error) {
         res.status(500).json(formatResponse(false, error.message));
     }
@@ -232,3 +271,5 @@ exports.getCompanyDropdown = asyncHandler(async (req, res) => {
         res.status(500).json(formatResponse(false, error.message));
     }
 });
+
+
