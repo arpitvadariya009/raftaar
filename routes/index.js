@@ -9,6 +9,8 @@ const faceRoutes = require('./face.routes');
 const authEmployeeRoutes = require('./authEmployee.routes');
 const dashboardRoutes = require('./dashboardRoutes');
 const subscriptionPlanRoutes = require('./subscriptionPlanRoutes');
+const attendanceRoutes = require('./attendanceRoutes');
+const assetRoutes = require('./assetRoutes');
 
 router.use('/auth', authRoutes);
 router.use('/companies', companyRoutes);
@@ -19,5 +21,7 @@ router.use('/enquiries', enquiryRoutes);
 router.use('/faces', faceRoutes);
 router.use('/auth-employee', authEmployeeRoutes);
 router.use('/dashboard', dashboardRoutes);
+router.use('/attendance', attendanceRoutes);
+router.use('/assets', assetRoutes);
 
 module.exports = router;
