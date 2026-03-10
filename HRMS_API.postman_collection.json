@@ -1180,6 +1180,442 @@
                     "response": []
                 }
             ]
+        },
+        {
+            "name": "6. Attendance",
+            "item": [
+                {
+                    "name": "Mark Attendance",
+                    "request": {
+                        "method": "POST",
+                        "header": [],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"employeeId\": \"REPLACE_WITH_EMPLOYEE_ID\"\n}",
+                            "options": {
+                                "raw": {
+                                    "language": "json"
+                                }
+                            }
+                        },
+                        "url": {
+                            "raw": "{{baseUrl}}/api/attendance/mark",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "api",
+                                "attendance",
+                                "mark"
+                            ]
+                        }
+                    }
+                },
+                {
+                    "name": "Get Attendance Log",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{baseUrl}}/api/attendance/log/:employeeId?month=3&year=2026",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "api",
+                                "attendance",
+                                "log",
+                                ":employeeId"
+                            ],
+                            "query": [
+                                {
+                                    "key": "month",
+                                    "value": "3"
+                                },
+                                {
+                                    "key": "year",
+                                    "value": "2026"
+                                }
+                            ],
+                            "variable": [
+                                {
+                                    "key": "employeeId",
+                                    "value": "REPLACE_WITH_EMPLOYEE_ID"
+                                }
+                            ]
+                        }
+                    }
+                },
+                {
+                    "name": "Get Dashboard Stats",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{baseUrl}}/api/attendance/stats/:employeeId?month=3&year=2026",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "api",
+                                "attendance",
+                                "stats",
+                                ":employeeId"
+                            ],
+                            "query": [
+                                {
+                                    "key": "month",
+                                    "value": "3"
+                                },
+                                {
+                                    "key": "year",
+                                    "value": "2026"
+                                }
+                            ],
+                            "variable": [
+                                {
+                                    "key": "employeeId",
+                                    "value": "REPLACE_WITH_EMPLOYEE_ID"
+                                }
+                            ]
+                        }
+                    }
+                }
+            ]
+        },
+        {
+            "name": "7. Assets",
+            "item": [
+                {
+                    "name": "Add Asset",
+                    "request": {
+                        "method": "POST",
+                        "header": [],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"assetName\": \"MacBook Pro 14\",\n    \"serialCode\": \"MB-2024-001\",\n    \"category\": \"Laptop\",\n    \"quantity\": 1,\n    \"approxCost\": 2499,\n    \"assignedTo\": \"REPLACE_WITH_EMPLOYEE_ID\",\n    \"companyId\": \"REPLACE_WITH_COMPANY_ID\"\n}",
+                            "options": {
+                                "raw": {
+                                    "language": "json"
+                                }
+                            }
+                        },
+                        "url": {
+                            "raw": "{{baseUrl}}/api/assets/add",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "api",
+                                "assets",
+                                "add"
+                            ]
+                        }
+                    }
+                },
+                {
+                    "name": "Get Company Assets",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{baseUrl}}/api/assets/company/:companyId",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "api",
+                                "assets",
+                                "company",
+                                ":companyId"
+                            ],
+                            "variable": [
+                                {
+                                    "key": "companyId",
+                                    "value": "REPLACE_WITH_COMPANY_ID"
+                                }
+                            ]
+                        }
+                    }
+                },
+                {
+                    "name": "Update Asset",
+                    "request": {
+                        "method": "PUT",
+                        "header": [],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"status\": \"Inactive\"\n}",
+                            "options": {
+                                "raw": {
+                                    "language": "json"
+                                }
+                            }
+                        },
+                        "url": {
+                            "raw": "{{baseUrl}}/api/assets/update/:id",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "api",
+                                "assets",
+                                "update",
+                                ":id"
+                            ],
+                            "variable": [
+                                {
+                                    "key": "id",
+                                    "value": "REPLACE_WITH_ASSET_ID"
+                                }
+                            ]
+                        }
+                    }
+                },
+                {
+                    "name": "Delete Asset",
+                    "request": {
+                        "method": "DELETE",
+                        "header": [],
+                        "url": {
+                            "raw": "{{baseUrl}}/api/assets/delete/:id",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "api",
+                                "assets",
+                                "delete",
+                                ":id"
+                            ],
+                            "variable": [
+                                {
+                                    "key": "id",
+                                    "value": "REPLACE_WITH_ASSET_ID"
+                                }
+                            ]
+                        }
+                    }
+                }
+            ]
+        },
+        {
+            "name": "6. Attendance",
+            "item": [
+                {
+                    "name": "Mark Attendance",
+                    "request": {
+                        "method": "POST",
+                        "header": [],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"employeeId\": \"REPLACE_WITH_EMPLOYEE_ID\"\n}",
+                            "options": {
+                                "raw": {
+                                    "language": "json"
+                                }
+                            }
+                        },
+                        "url": {
+                            "raw": "{{baseUrl}}/api/attendance/mark",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "api",
+                                "attendance",
+                                "mark"
+                            ]
+                        }
+                    }
+                },
+                {
+                    "name": "Get Attendance Log",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{baseUrl}}/api/attendance/log/:employeeId?month=3&year=2026",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "api",
+                                "attendance",
+                                "log",
+                                ":employeeId"
+                            ],
+                            "query": [
+                                {
+                                    "key": "month",
+                                    "value": "3"
+                                },
+                                {
+                                    "key": "year",
+                                    "value": "2026"
+                                }
+                            ],
+                            "variable": [
+                                {
+                                    "key": "employeeId",
+                                    "value": "REPLACE_WITH_EMPLOYEE_ID"
+                                }
+                            ]
+                        }
+                    }
+                },
+                {
+                    "name": "Get Dashboard Stats",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{baseUrl}}/api/attendance/stats/:employeeId?month=3&year=2026",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "api",
+                                "attendance",
+                                "stats",
+                                ":employeeId"
+                            ],
+                            "query": [
+                                {
+                                    "key": "month",
+                                    "value": "3"
+                                },
+                                {
+                                    "key": "year",
+                                    "value": "2026"
+                                }
+                            ],
+                            "variable": [
+                                {
+                                    "key": "employeeId",
+                                    "value": "REPLACE_WITH_EMPLOYEE_ID"
+                                }
+                            ]
+                        }
+                    }
+                }
+            ]
+        },
+        {
+            "name": "7. Assets",
+            "item": [
+                {
+                    "name": "Add Asset",
+                    "request": {
+                        "method": "POST",
+                        "header": [],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"assetName\": \"MacBook Pro 14\",\n    \"serialCode\": \"MB-2024-001\",\n    \"category\": \"Laptop\",\n    \"quantity\": 1,\n    \"approxCost\": 2499,\n    \"assignedTo\": \"REPLACE_WITH_EMPLOYEE_ID\",\n    \"companyId\": \"REPLACE_WITH_COMPANY_ID\"\n}",
+                            "options": {
+                                "raw": {
+                                    "language": "json"
+                                }
+                            }
+                        },
+                        "url": {
+                            "raw": "{{baseUrl}}/api/assets/add",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "api",
+                                "assets",
+                                "add"
+                            ]
+                        }
+                    }
+                },
+                {
+                    "name": "Get Company Assets",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{baseUrl}}/api/assets/company/:companyId",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "api",
+                                "assets",
+                                "company",
+                                ":companyId"
+                            ],
+                            "variable": [
+                                {
+                                    "key": "companyId",
+                                    "value": "REPLACE_WITH_COMPANY_ID"
+                                }
+                            ]
+                        }
+                    }
+                },
+                {
+                    "name": "Update Asset",
+                    "request": {
+                        "method": "PUT",
+                        "header": [],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"status\": \"Inactive\"\n}",
+                            "options": {
+                                "raw": {
+                                    "language": "json"
+                                }
+                            }
+                        },
+                        "url": {
+                            "raw": "{{baseUrl}}/api/assets/update/:id",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "api",
+                                "assets",
+                                "update",
+                                ":id"
+                            ],
+                            "variable": [
+                                {
+                                    "key": "id",
+                                    "value": "REPLACE_WITH_ASSET_ID"
+                                }
+                            ]
+                        }
+                    }
+                },
+                {
+                    "name": "Delete Asset",
+                    "request": {
+                        "method": "DELETE",
+                        "header": [],
+                        "url": {
+                            "raw": "{{baseUrl}}/api/assets/delete/:id",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "api",
+                                "assets",
+                                "delete",
+                                ":id"
+                            ],
+                            "variable": [
+                                {
+                                    "key": "id",
+                                    "value": "REPLACE_WITH_ASSET_ID"
+                                }
+                            ]
+                        }
+                    }
+                }
+            ]
         }
     ],
     "auth": {
