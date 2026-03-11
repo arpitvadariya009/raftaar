@@ -5,7 +5,12 @@ const validateRequest = require('../middlewares/validateRequest');
 const { companySchema } = require('../validations/hrmsValidation');
 const { protect } = require('../middleware/authMiddleware');
 
-// All company routes are protected (Admin only)
+// @desc    Login company
+// @route   POST /api/companies/login
+// @access  Public
+router.post('/login', companyController.loginCompany);
+
+// All company routes from here are protected (Admin only)
 router.use(protect);
 
 // @desc    Get all companies/customers (with search & pagination)

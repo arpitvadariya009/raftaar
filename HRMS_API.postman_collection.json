@@ -101,6 +101,36 @@
                     }
                 },
                 {
+                    "name": "Login Company",
+                    "request": {
+                        "auth": {
+                            "type": "noauth"
+                        },
+                        "method": "POST",
+                        "header": [],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"_id\": \"COMPANY_ID_HERE\",\n    \"password\": \"password123\"\n}",
+                            "options": {
+                                "raw": {
+                                    "language": "json"
+                                }
+                            }
+                        },
+                        "url": {
+                            "raw": "{{baseUrl}}/api/companies/login",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "api",
+                                "companies",
+                                "login"
+                            ]
+                        }
+                    }
+                },
+                {
                     "name": "List All Companies",
                     "request": {
                         "method": "GET",

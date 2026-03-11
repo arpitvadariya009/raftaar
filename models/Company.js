@@ -98,7 +98,7 @@ companySchema.pre('save', async function (next) {
         this.password = await bcrypt.hash(this.password, salt);
     }
 
-    next();
+    // next();
 });
 
 // Match company entered password to hashed password in database

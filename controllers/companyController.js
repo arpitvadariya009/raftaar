@@ -111,6 +111,7 @@ exports.registerCompany = asyncHandler(async (req, res) => {
         const company = await Company.create(req.body);
         res.status(201).json(formatResponse(true, 'Company registered successfully', company));
     } catch (error) {
+        console.log(error);
         res.status(500).json(formatResponse(false, error.message));
     }
 });
@@ -271,5 +272,3 @@ exports.getCompanyDropdown = asyncHandler(async (req, res) => {
         res.status(500).json(formatResponse(false, error.message));
     }
 });
-
-
