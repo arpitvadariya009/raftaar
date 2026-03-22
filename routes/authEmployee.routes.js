@@ -37,21 +37,21 @@ const upload = multer({
  * @body    { username, email }
  * @file    image (multipart/form-data)
  */
-router.post('/register', upload.single('image'), authEmployeeController.registerEmployee);
+router.post('/registerEmployee', upload.single('image'), authEmployeeController.registerEmployee);
 
 /**
  * @route   POST /api/auth-employee/create
  * @desc    Create a new employee (Subscription-aware)
  * @access  Private/Public
  */
-router.post('/create', upload.single('image'), authEmployeeController.createEmployee);
+router.post('/createEmployee', upload.single('image'), authEmployeeController.createEmployee);
 
 /**
  * @route   POST /api/auth-employee/:id/image
  * @desc    Upload or update employee face image
  * @access  Private/Public
  */
-router.post('/:id/image', upload.single('image'), authEmployeeController.uploadEmployeeImage);
+router.post('/uploadEmployeeImage:id/image', upload.single('image'), authEmployeeController.uploadEmployeeImage);
 
 /**
  * @route   GET /api/auth-employee/all
@@ -59,7 +59,7 @@ router.post('/:id/image', upload.single('image'), authEmployeeController.uploadE
  * @access  Public
  * @query   page (default: 1), limit (default: 10)
  */
-router.get('/all', authEmployeeController.getAllEmployees);
+router.get('/getAllEmployees', authEmployeeController.getAllEmployees);
 
 /**
  * @route   POST /api/auth-employee/face-login
