@@ -416,7 +416,7 @@ exports.updateEmployee = async (req, res) => {
             'address', 'dateOfJoining', 'department', 'designation', 'reportingHead',
             'employmentType', 'employmentCategory', 'applicationPlanType',
             'highestQualification', 'yearsOfExperience', 'skills',
-            'grossSalary', 'paymentMode', 'bankName', 'accountNumber', 'bloodGroup', 'isActive'
+            'grossSalary', 'paymentMode', 'bankName', 'accountNumber', 'bloodGroup', 'isActive', 'password'
         ];
 
         // Apply updates
