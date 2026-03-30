@@ -13,9 +13,9 @@ const assetSchema = new mongoose.Schema(
             trim: true
         },
         category: {
-            type: String,
-            required: true,
-            trim: true
+            type: mongoose.Schema.Types.ObjectId,
+            ref: "AssetCategory",
+            required: true
         },
         quantity: {
             type: Number,
@@ -36,9 +36,8 @@ const assetSchema = new mongoose.Schema(
             required: true
         },
         status: {
-            type: String,
-            enum: ["Active", "Inactive"],
-            default: "Active"
+            type: Boolean,
+            default: true
         }
     },
     {

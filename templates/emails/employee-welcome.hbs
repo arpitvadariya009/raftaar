@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Welcome to the Team!</title>
+    <style>
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; line-height: 1.6; color: #333; margin: 0; padding: 0; background-color: #f4f7f6; }
+        .container { max-width: 600px; margin: 20px auto; background: #fff; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 20px rgba(0,0,0,0.08); }
+        .header { background: linear-gradient(135deg, #0ea5e9 0%, #2563eb 100%); padding: 40px 20px; text-align: center; color: #fff; }
+        .header h1 { margin: 0; font-size: 28px; font-weight: 700; }
+        .content { padding: 40px; }
+        .welcome-text { font-size: 18px; color: #1e293b; margin-bottom: 24px; }
+        .credentials-box { background: #f0f9ff; border: 1px solid #bae6fd; border-radius: 8px; padding: 24px; margin: 30px 0; border-left: 4px solid #0ea5e9; }
+        .credentials-box p { margin: 8px 0; font-size: 15px; }
+        .label { font-weight: 600; color: #0369a1; min-width: 140px; display: inline-block; }
+        .value { color: #0c4a6e; font-family: 'Courier New', Courier, monospace; background: #e0f2fe; padding: 2px 6px; border-radius: 4px; }
+        .btn { display: inline-block; padding: 14px 28px; background: #2563eb; color: #fff; text-decoration: none; border-radius: 8px; font-weight: 600; margin-top: 20px; }
+        .footer { padding: 30px; text-align: center; font-size: 13px; color: #9ca3af; border-top: 1px solid #f3f4f6; }
+        .highlight { color: #2563eb; font-weight: 600; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Welcome to the Family!</h1>
+        </div>
+        <div class="content">
+            <p class="welcome-text">Hi <span class="highlight">{{fullName}}</span>,</p>
+            <p>Your account has been created on <span class="highlight">Raftaar HRMS</span>. We're thrilled to have you with us!</p>
+            
+            <div class="credentials-box">
+                <p><span class="label">Employee ID:</span> <span class="value">{{employeeId}}</span></p>
+                <p><span class="label">Auto-generated Password:</span> <span style="color: #2563eb; font-weight: bold; font-size: 16px;">{{password}}</span></p>
+            </div>
+
+            <p>Please use these credentials to log into the employee portal. For your protection, please change your password upon your first login.</p>
+            
+            <a href="{{loginUrl}}" class="btn">Get Started</a>
+        </div>
+        <div class="footer">
+            <p>&copy; 2026 Raftaar HRMS. All rights reserved.</p>
+            <p>If you have any questions, please reach out to your HR department.</p>
+        </div>
+    </div>
+</body>
+</html>

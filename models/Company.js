@@ -3,11 +3,6 @@ const { generateCompanyCode } = require('../utils/helpers');
 const bcrypt = require('bcryptjs');
 
 const companySchema = new mongoose.Schema({
-    companyCode: {
-        type: String,
-        unique: true,
-        uppercase: true
-    },
     companyName: {
         type: String,
         required: [true, 'Company name is required'],
@@ -57,15 +52,14 @@ const companySchema = new mongoose.Schema({
     employeeStrength: { type: Number },
     status: {
         type: String,
-        enum: ['Active', 'Inactive', 'Trial'],
-        default: 'Trial'
+        enum: ['Active', 'Inactive', 'Trial']
     },
     onboardDate: { type: Date, default: Date.now },
-    notificationEnabled: { type: Boolean, default: true },
+    isActive: { type: Boolean, default: true },
     password: {
         type: String,
         required: [true, 'Please add a password'],
-        minlength: 6,
+        minlength: 8,
         select: false,
     },
     token: {

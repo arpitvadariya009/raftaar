@@ -19,8 +19,41 @@ exports.createBanner = asyncHandler(async (req, res) => {
 // @access  Private/Admin
 exports.getAllBanners = asyncHandler(async (req, res) => {
     try {
-        const banners = await NotificationBanner.find().populate('company', 'companyName').sort({ createdAt: -1 });
-        res.json(formatResponse(true, 'Banners retrieved successfully', banners));
+        const { page = 1, limit = 10, search, companyId, isActive, id, sortBy = 'createdAt', order = 'desc' } = req.query;
+
+        const query = {};
+
+        if (id) query._id = id;
+        if (companyId) query.company = companyId;
+
+        if (isActive) {
+            query.isActive = isActive;
+        }
+
+        if (search) {
+            query.$or = [
+                { message: { $regex: search, $options: 'i' } },
+                { companyName: { $regex: search, $options: 'i' } }
+            ];
+        }
+
+        const skip = (parseInt(page) - 1) * parseInt(limit);
+        const sortOrder = order === 'desc' ? -1 : 1;
+
+        const banners = await NotificationBanner.find(query)
+            .populate('company', 'companyName')
+            .sort({ [sortBy]: sortOrder })
+            .skip(skip)
+            .limit(parseInt(limit));
+
+        const totalRecords = await NotificationBanner.countDocuments(query);
+
+        res.json(formatResponse(true, 'Banners retrieved successfully', banners, {
+            page: parseInt(page),
+            limit: parseInt(limit),
+            totalPages: Math.ceil(totalRecords / limit),
+            totalRecords: totalRecords
+        }));
     } catch (error) {
         res.status(500).json(formatResponse(false, error.message));
     }

@@ -11,6 +11,10 @@ const dashboardRoutes = require('./dashboardRoutes');
 const subscriptionPlanRoutes = require('./subscriptionPlanRoutes');
 const attendanceRoutes = require('./attendanceRoutes');
 const assetRoutes = require('./assetRoutes');
+const leaveRoutes = require('./leaveRoutes');
+const companyDashboardRoutes = require('./companyDashboardRoutes');
+const gatePassRoutes = require('./gatePassRoutes');
+const weeklyOffRoutes = require('./weeklyOffRoutes');
 
 router.use('/auth', authRoutes);
 router.use('/companies', companyRoutes);
@@ -23,5 +27,9 @@ router.use('/auth-employee', authEmployeeRoutes);
 router.use('/dashboard', dashboardRoutes);
 router.use('/attendance', attendanceRoutes);
 router.use('/assets', assetRoutes);
+router.use('/leaves', leaveRoutes);
+router.use('/company-dashboard', companyDashboardRoutes);
+router.use('/gate-passes', gatePassRoutes);
+router.use('/weekly-off', weeklyOffRoutes);
 
 module.exports = router;

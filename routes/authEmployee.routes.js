@@ -4,6 +4,7 @@ const authEmployeeController = require('../controllers/authEmployee.controller')
 const multer = require('multer');
 const path = require('path');
 const crypto = require('crypto');
+const { protect } = require('../middleware/authMiddleware');
 
 // Configure Multer for temporary storage
 const storage = multer.diskStorage({
@@ -30,28 +31,27 @@ const upload = multer({
     }
 });
 
-/**
- * @route   POST /api/auth-employee/register
- * @desc    Register a new employee with face recognition
- * @access  Public
- * @body    { username, email }
- * @file    image (multipart/form-data)
- */
-router.post('/registerEmployee', upload.single('image'), authEmployeeController.registerEmployee);
 
 /**
  * @route   POST /api/auth-employee/create
  * @desc    Create a new employee (Subscription-aware)
  * @access  Private/Public
  */
-router.post('/createEmployee', upload.single('image'), authEmployeeController.createEmployee);
+router.post('/createEmployee', protect, upload.single('image'), authEmployeeController.createEmployee);
 
 /**
- * @route   POST /api/auth-employee/:id/image
+ * @route   POST /api/auth-employee/uploadEmployeeImage/:id
  * @desc    Upload or update employee face image
  * @access  Private/Public
  */
-router.post('/uploadEmployeeImage:id/image', upload.single('image'), authEmployeeController.uploadEmployeeImage);
+router.post('/uploadEmployeeImage/:id', protect, upload.single('image'), authEmployeeController.uploadEmployeeImage);
+
+/**
+ * @route   PUT /api/auth-employee/updateEmployee/:id
+ * @desc    Update employee details
+ * @access  Private/Public
+ */
+router.put('/updateEmployee/:id', protect, authEmployeeController.updateEmployee);
 
 /**
  * @route   GET /api/auth-employee/all
@@ -59,7 +59,14 @@ router.post('/uploadEmployeeImage:id/image', upload.single('image'), authEmploye
  * @access  Public
  * @query   page (default: 1), limit (default: 10)
  */
-router.get('/getAllEmployees', authEmployeeController.getAllEmployees);
+router.get('/getAllEmployees', protect, authEmployeeController.getAllEmployees);
+
+/**
+ * @route   GET /api/auth-employee/getEmployee/:id
+ * @desc    Get single employee by ID
+ * @access  Public
+ */
+router.get('/getEmployee/:id', protect, authEmployeeController.getEmployeeById);
 
 /**
  * @route   POST /api/auth-employee/face-login

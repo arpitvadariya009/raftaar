@@ -91,11 +91,48 @@ exports.getAttendanceLog = async (req, res, next) => {
         const logs = await Attendance.find({
             employee: employeeId,
             date: { $gte: startDate, $lte: endDate }
-        }).sort({ date: 1 });
+        }).sort({ date: 1 }).lean();
+
+        // Fetch approved gate passes for the same period
+        const GatePass = require("../models/GatePass");
+        const gatePasses = await GatePass.find({
+            employee: employeeId,
+            status: 1,
+            date: { $gte: startDate, $lte: endDate }
+        }).sort({ date: 1 }).lean();
+
+        // Merge gate passes into logs
+        const logsWithGatePasses = logs.map(log => {
+            const dayGatePasses = gatePasses.filter(gp => 
+                gp.date.toDateString() === log.date.toDateString()
+            );
+            return {
+                ...log,
+                gatePasses: dayGatePasses
+            };
+        });
+
+        // Add logs for days that have gate passes but no attendance marked yet
+        const attendanceDates = new Set(logs.map(l => l.date.toDateString()));
+        gatePasses.forEach(gp => {
+            const dateStr = gp.date.toDateString();
+            if (!attendanceDates.has(dateStr)) {
+                logsWithGatePasses.push({
+                    employee: employeeId,
+                    date: gp.date,
+                    status: "Absent", // Or maybe just a placeholder
+                    gatePasses: gatePasses.filter(g => g.date.toDateString() === dateStr)
+                });
+                attendanceDates.add(dateStr);
+            }
+        });
+
+        // Sort final list by date
+        logsWithGatePasses.sort((a, b) => new Date(a.date) - new Date(b.date));
 
         res.status(200).json({
             success: true,
-            data: logs
+            data: logsWithGatePasses
         });
     } catch (error) {
         next(error);
@@ -117,12 +154,22 @@ exports.getDashboardStats = async (req, res, next) => {
         const startDate = new Date(year, month - 1, 1);
         const endDate = new Date(year, month, 0, 23, 59, 59, 999);
 
-        // Count Working Days in the given month (excluding Sundays)
+        // Fetch Weekly Off assignment for the employee for this month/year
+        const WeeklyOffAssignment = require("../models/WeeklyOffAssignment");
+        const assignment = await WeeklyOffAssignment.findOne({
+            employee: employeeId,
+            month: month,
+            year: year
+        }).populate("template");
+
+        const offDays = assignment?.template?.offDays || [0]; // Default to Sunday (0) if no assignment
+
+        // Count Working Days in the given month (excluding Weekly Offs)
         const totalDaysInMonth = new Date(year, month, 0).getDate();
         let workingDays = 0;
         for (let d = 1; d <= totalDaysInMonth; d++) {
             const tempDate = new Date(year, month - 1, d);
-            if (tempDate.getDay() !== 0) workingDays++; // Exclude Sunday
+            if (!offDays.includes(tempDate.getDay())) workingDays++;
         }
 
         const stats = await Attendance.aggregate([

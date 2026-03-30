@@ -113,6 +113,9 @@ exports.createSubscription = asyncHandler(async (req, res) => {
             remarks: activeSubscription ? 'Renewal - new subscription created' : 'New subscription created'
         });
 
+        // Update company status to Active
+        await Company.findByIdAndUpdate(company, { status: 'Active' });
+
         res.status(201).json(formatResponse(true, 'Subscription created successfully', subscription));
     } catch (error) {
         res.status(500).json(formatResponse(false, error.message));

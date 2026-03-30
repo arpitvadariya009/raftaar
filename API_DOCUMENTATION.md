@@ -63,9 +63,12 @@ Track potential leads. Base URL: `/api/enquiries`
 
 ## 6. Auth Employee (Face Auth)
 Manage employees using biometrics. Base URL: `/api/auth-employee`
-- `POST /register`: Register employee with username, email, and face image.
-- `GET /all`: List employees with pagination (excludes face descriptors).
+- `POST /createEmployee`: Create employee with full profile and face image (Subscription-aware).
+- `GET /getAllEmployees`: List employees with pagination and company filter.
 - `POST /face-login`: Recognize an employee via face image.
+- `PUT /updateEmployee/:id`: Update employee details.
+- `POST /uploadEmployeeImage/:id`: Update employee face image (Pro Plan Only).
+
 
 ## 7. Dashboard
 Dashboard statistics and recent data. Base URL: `/api/dashboard`

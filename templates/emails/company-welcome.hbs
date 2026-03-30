@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Welcome to Raftaar HRMS</title>
+    <style>
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; line-height: 1.6; color: #333; margin: 0; padding: 0; background-color: #f4f7f6; }
+        .container { max-width: 600px; margin: 20px auto; background: #fff; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 20px rgba(0,0,0,0.08); }
+        .header { background: linear-gradient(135deg, #6366f1 0%, #a855f7 100%); padding: 40px 20px; text-align: center; color: #fff; }
+        .header h1 { margin: 0; font-size: 28px; font-weight: 700; letter-spacing: -0.5px; }
+        .content { padding: 40px; }
+        .welcome-text { font-size: 18px; color: #4b5563; margin-bottom: 24px; }
+        .credentials-box { background: #f9fafb; border: 1px solid #e5e7eb; border-radius: 8px; padding: 24px; margin: 30px 0; border-left: 4px solid #6366f1; }
+        .credentials-box p { margin: 8px 0; font-size: 15px; }
+        .label { font-weight: 600; color: #374151; min-width: 120px; display: inline-block; }
+        .value { color: #111827; font-family: 'Courier New', Courier, monospace; background: #f3f4f6; padding: 2px 6px; border-radius: 4px; }
+        .btn { display: inline-block; padding: 14px 28px; background: #6366f1; color: #fff; text-decoration: none; border-radius: 8px; font-weight: 600; margin-top: 20px; transition: background 0.3s ease; }
+        .footer { padding: 30px; text-align: center; font-size: 13px; color: #9ca3af; border-top: 1px solid #f3f4f6; }
+        .highlight { color: #6366f1; font-weight: 600; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Welcome to Raftaar HRMS</h1>
+        </div>
+        <div class="content">
+            <p class="welcome-text">Hi <span class="highlight">{{hrName}}</span>,</p>
+            <p>Congratulations! Your company, <span class="highlight">{{companyName}}</span>, has been successfully registered on our platform. We're excited to help you streamline your HR operations.</p>
+            
+            <div class="credentials-box">
+                <p><span class="label">Company Name:</span> <span class="value">{{companyName}}</span></p>
+                <p><span class="label">Company Code:</span> <span class="value">{{companyCode}}</span></p>
+                <p><span class="label">Auto-generated Password:</span> <span style="color: #6366f1; font-weight: bold; font-size: 16px;">{{password}}</span></p>
+            </div>
+
+            <p>You can now log in to your dashboard using these credentials. We recommend changing your password after your first login for better security.</p>
+            
+            <a href="{{loginUrl}}" class="btn">Login to Dashboard</a>
+        </div>
+        <div class="footer">
+            <p>&copy; 2026 Raftaar HRMS. All rights reserved.</p>
+            <p>If you didn't request this registration, please contact our support.</p>
+        </div>
+    </div>
+</body>
+</html>

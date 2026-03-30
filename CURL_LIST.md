@@ -216,13 +216,31 @@ curl -X POST http://localhost:1911/api/faces/verify \
 
 ## 7. Auth Employee (Face Auth)
 
-### Register Employee
+
+### Create Employee (Subscription-aware)
 ```bash
-curl -X POST http://localhost:1911/api/auth-employee/register \
--F "username=johndoe" \
--F "email=johndoe@example.com" \
--F "image=@/path/to/image.jpg"
+curl -X POST http://localhost:1911/api/auth-employee/createEmployee \
+  -F "company=65f1a23e4b5c6d7e8f9a0b1c" \
+  -F "firstName=John" \
+  -F "lastName=Doe" \
+  -F "email=john.doe@example.com" \
+  -F "contactNumber=9876543210" \
+  -F "countryCode=IN" \
+  -F "dialCode=+91" \
+  -F "address=123 Main St" \
+  -F "dateOfBirth=1995-05-15" \
+  -F "dateOfJoining=2024-03-01" \
+  -F "department=Sales" \
+  -F "designation=Sales Executive" \
+  -F "reportingHead=Jane Smith" \
+  -F "employmentType=Company Name" \
+  -F "employmentCategory=Full-Time" \
+  -F "applicationPlanType=2" \
+  -F "grossSalary=45000" \
+  -F "gender=Male" \
+  -F "image=@/path/to/image.jpg"
 ```
+
 
 ### Get All Employees
 ```bash
@@ -256,4 +274,100 @@ curl -X GET "http://localhost:5000/api/dashboard/recent-companies?page=1&limit=5
 ```bash
 curl -X GET "http://localhost:5000/api/dashboard/recent-enquiries?page=1&limit=5&status=Pending" \
 -H "Authorization: Bearer YOUR_TOKEN_HERE"
+```
+
+---
+
+## 9. Gate Pass Management (Protected)
+
+### Apply for Gate Pass
+```bash
+curl -X POST http://localhost:1911/api/gate-passes/apply \
+-H "Content-Type: application/json" \
+-d '{
+  "employeeId": "65f1a23e4b5c6d7e8f9a0b1c",
+  "companyId": "65f1a12d4b5c6d7e8f9a0b1b",
+  "gatePassType": "Personal",
+  "date": "2026-03-27",
+  "startTime": "2026-03-27T14:00:00.000Z",
+  "endTime": "2026-03-27T16:00:00.000Z",
+  "reason": "Personal urgent work"
+}'
+```
+
+### Get All Gate Passes (Company)
+```bash
+curl -X GET "http://localhost:1911/api/gate-passes/company/COMP_ID?page=1&limit=10&status=Pending&search=John"
+```
+
+### Get Gate Pass Stats
+```bash
+curl -X GET http://localhost:1911/api/gate-passes/stats/COMP_ID
+```
+
+### Update Gate Pass Status (Approve/Reject)
+```bash
+curl -X PUT http://localhost:1911/api/gate-passes/status/GP_ID \
+-H "Content-Type: application/json" \
+-d '{"status": 1}'
+```
+
+---
+
+## 10. Attendance & Dashboard (Integrated)
+
+### Get Attendance Log (with Gate Passes)
+```bash
+curl -X GET "http://localhost:1911/api/attendance/log/EMP_ID?month=3&year=2026"
+```
+
+### Get Company Dashboard Stats (with Gate Pass count)
+```
+
+---
+
+## 11. Weekly Off Management (Protected)
+
+### Create Template
+```bash
+curl -X POST http://localhost:1911/api/weekly-off/template \
+-H "Content-Type: application/json" \
+-d '{
+  "name": "Standard Weekend",
+  "offDays": [0, 6],
+  "companyId": "COMP_ID"
+}'
+```
+
+### List Templates
+```bash
+curl -X GET http://localhost:1911/api/weekly-off/templates/COMP_ID
+```
+
+### Assign Weekly Off to Employee
+```bash
+curl -X POST http://localhost:1911/api/weekly-off/assign \
+-H "Content-Type: application/json" \
+-d '{
+  "employeeId": "EMP_ID",
+  "templateId": "TPL_ID",
+  "month": 3,
+  "year": 2026,
+  "companyId": "COMP_ID"
+}'
+```
+
+### List Assignments (Month Wise)
+```bash
+curl -X GET "http://localhost:1911/api/weekly-off/assignments/COMP_ID?month=3&year=2026&search=John"
+```
+
+### Get Weekly Off Dashboard Stats
+```bash
+curl -X GET http://localhost:1911/api/weekly-off/stats/COMP_ID
+```
+
+### Delete Template
+```bash
+curl -X DELETE http://localhost:1911/api/weekly-off/template/TPL_ID
 ```
