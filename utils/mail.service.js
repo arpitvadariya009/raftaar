@@ -52,7 +52,7 @@ exports.sendEmail = async (toEmail, subject, templateName, context) => {
         }
 
         const mailOptions = {
-            from: process.env.EMAIL_FROM || process.env.EMAIL_USER,
+            from: `"HRMS Support" <${process.env.EMAIL_USER}>`,
             to: toEmail,
             subject: subject,
             html: html
