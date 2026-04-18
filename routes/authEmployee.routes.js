@@ -76,4 +76,18 @@ router.get('/getEmployee/:id', protect, authEmployeeController.getEmployeeById);
  */
 router.post('/face-login', upload.single('image'), authEmployeeController.getFaceData);
 
+/**
+ * @route   POST /api/auth-employee/login
+ * @desc    Employee Login (ID and Password)
+ * @access  Public
+ */
+router.post('/login', authEmployeeController.employeeLogin);
+
+/**
+ * @route   POST /api/auth-employee/forgot-password
+ * @desc    Forgot Password
+ * @access  Public
+ */
+router.post('/forgot-password', authEmployeeController.forgotPassword);
+
 module.exports = router;

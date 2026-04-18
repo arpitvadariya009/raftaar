@@ -464,3 +464,78 @@ exports.getEmployeeById = async (req, res) => {
         res.status(500).json(formatResponse(false, error.message));
     }
 };
+
+/**
+ * Employee Login (ID and Password)
+ * POST /api/auth-employee/login
+ */
+exports.employeeLogin = async (req, res) => {
+    try {
+        const { employeeId, password } = req.body;
+
+        if (!employeeId || !password) {
+            return res.status(400).json(formatResponse(false, 'Employee ID and password are required'));
+        }
+
+        const employee = await AuthEmployee.findById(employeeId);
+        if (!employee) {
+            return res.status(401).json(formatResponse(false, 'Invalid credentials'));
+        }
+
+        if (employee.password !== password) {
+             return res.status(401).json(formatResponse(false, 'Invalid credentials'));
+        }
+
+        if (!employee.isActive) {
+            return res.status(403).json(formatResponse(false, 'Account is inactive'));
+        }
+
+        // Generate Token
+        const jwt = require('jsonwebtoken');
+        const token = jwt.sign({ id: employee._id }, process.env.JWT_SECRET || 'secret', { expiresIn: '30d' });
+
+        res.json(formatResponse(true, 'Login successful', {
+            token,
+            employee: {
+                _id: employee._id,
+                fullName: employee.fullName,
+                firstName: employee.firstName,
+                lastName: employee.lastName,
+                email: employee.email,
+                company: employee.company,
+                department: employee.department,
+                designation: employee.designation,
+                image: employee.image
+            }
+        }));
+    } catch (error) {
+        res.status(500).json(formatResponse(false, error.message));
+    }
+};
+
+/**
+ * Forgot Password
+ * POST /api/auth-employee/forgot-password
+ */
+exports.forgotPassword = async (req, res) => {
+    try {
+        const { email } = req.body;
+        const employee = await AuthEmployee.findOne({ email });
+
+        if (!employee) {
+            return res.status(404).json(formatResponse(false, 'Employee not found with this email'));
+        }
+
+        // Send existing password (simple version) or reset link
+        await mailService.sendEmail(
+            email,
+            'Password Recovery - Raftaar HRMS',
+            'employee-password-reset', // Reusing template
+            { fullName: employee.fullName, employeeId: employee._id, password: employee.password }
+        );
+
+        res.json(formatResponse(true, 'Password sent to your email'));
+    } catch (error) {
+        res.status(500).json(formatResponse(false, error.message));
+    }
+};

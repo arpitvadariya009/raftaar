@@ -1,5 +1,8 @@
 const Attendance = require("../models/Attendance");
 const AuthEmployee = require("../models/AuthEmployee.model");
+const asyncHandler = require('express-async-handler');
+const { formatResponse } = require('../utils/helpers');
+const mongoose = require('mongoose');
 
 /**
  * @desc    Mark Attendance (In / Out)
@@ -103,7 +106,7 @@ exports.getAttendanceLog = async (req, res, next) => {
 
         // Merge gate passes into logs
         const logsWithGatePasses = logs.map(log => {
-            const dayGatePasses = gatePasses.filter(gp => 
+            const dayGatePasses = gatePasses.filter(gp =>
                 gp.date.toDateString() === log.date.toDateString()
             );
             return {
@@ -234,12 +237,17 @@ exports.getDashboardStats = async (req, res, next) => {
  * @route   GET /api/attendance/company-stats
  * @access  Private (Admin / Guard)
  */
-exports.getCompanyAttendanceStats = async (req, res, next) => {
+/**
+ * @desc    Get Company-wide Attendance Statistics
+ * @route   GET /api/attendance/company-stats
+ * @access  Private (Admin / Guard)
+ */
+exports.getCompanyAttendanceStats = asyncHandler(async (req, res) => {
     try {
         const { companyId, startDate, endDate } = req.query;
 
         if (!companyId) {
-            return res.status(400).json({ success: false, message: "Company ID is required" });
+            return res.status(400).json(formatResponse(false, 'Company ID is required'));
         }
 
         const todayStart = new Date();
@@ -253,147 +261,254 @@ exports.getCompanyAttendanceStats = async (req, res, next) => {
         if (endDate && !startDate) start.setTime(end.getTime() - (end.getTime() % (24 * 60 * 60 * 1000)));
         if (startDate && !endDate) end.setTime(start.getTime() + (23 * 60 * 60 * 1000) + (59 * 60 * 1000) + 59999);
 
-        // Run queries in parallel
-        const [totalEmployees, attendanceStats] = await Promise.all([
-            AuthEmployee.countDocuments({ company: companyId, isActive: true }),
-            Attendance.aggregate([
-                {
-                    $match: {
-                        company: new require('mongoose').Types.ObjectId(companyId),
-                        date: { $gte: start, $lte: end }
-                    }
-                },
-                {
-                    $group: {
-                        _id: "$status",
-                        count: { $sum: 1 }
+        const mongoose = require('mongoose');
+        const companyObjectId = new mongoose.Types.ObjectId(companyId);
+
+        const stats = await AuthEmployee.aggregate([
+            { $match: { company: companyObjectId, isActive: true } },
+            {
+                $lookup: {
+                    from: "attendances",
+                    let: { empId: "$_id" },
+                    pipeline: [
+                        {
+                            $match: {
+                                $expr: {
+                                    $and: [
+                                        { $eq: ["$employee", "$$empId"] },
+                                        { $gte: ["$date", start] },
+                                        { $lte: ["$date", end] }
+                                    ]
+                                }
+                            }
+                        }
+                    ],
+                    as: "attendanceRecords"
+                }
+            },
+            // If it's a single day, we have at most 1 attendance record per employee
+            // If it's a range, an employee might have multiple.
+            // For dashboard simplicity (based on screenshot), we'll categorize the most recent or default to Absent.
+            {
+                $project: {
+                    status: {
+                        $cond: {
+                            if: { $gt: [{ $size: "$attendanceRecords" }, 0] },
+                            then: { $arrayElemAt: ["$attendanceRecords.status", 0] }, // Simplify to first found status in range
+                            else: "Absent"
+                        }
                     }
                 }
-            ])
+            },
+            {
+                $group: {
+                    _id: "$status",
+                    count: { $sum: 1 }
+                }
+            }
         ]);
 
-        let present = 0;
-        let absent = 0;
-        let late = 0;
-        let leave = 0;
-        let halfDay = 0;
+        const result = {
+            present: 0,
+            absent: 0,
+            late: 0
+        };
 
-        attendanceStats.forEach(stat => {
-            if (stat._id === "Present") present = stat.count;
-            if (stat._id === "Late") late = stat.count;
-            if (stat._id === "Absent") absent = stat.count;
-            if (stat._id === "Leave") leave = stat.count;
-            if (stat._id === "Half Day") halfDay = stat.count;
+        stats.forEach(s => {
+            if (s._id === "Present") result.present = s.count;
+            if (s._id === "Absent") result.absent = s.count;
+            if (s._id === "Late") result.late = s.count;
         });
 
-        // If today, calculate missing employees as absent
-        const now = new Date();
-        let calculatedAbsent = absent;
-        if (start <= now && end >= now) {
-            const accountedFor = present + late + leave + halfDay + absent;
-            calculatedAbsent = Math.max(0, totalEmployees - accountedFor) + absent;
-        }
-
-        res.status(200).json({
-            success: true,
-            data: {
-                totalEmployees,
-                present: present,
-                late: late,
-                absent: calculatedAbsent,
-                leave: leave,
-                halfDay: halfDay
-            }
-        });
+        res.status(200).json(formatResponse(true, 'Attendance statistics retrieved successfully', result));
 
     } catch (error) {
-        next(error);
+        console.error('Get Company Attendance Stats Error:', error);
+        res.status(500).json(formatResponse(false, error.message));
     }
-};
+});
 
 /**
  * @desc    Get Detailed Company Attendance List
  * @route   GET /api/attendance/company-list
  * @access  Private (Admin / Guard)
  */
-exports.getCompanyAttendanceList = async (req, res, next) => {
+exports.getCompanyAttendanceList = asyncHandler(async (req, res) => {
     try {
-        const { companyId, startDate, endDate, search, department } = req.query;
+        const {
+            companyId,
+            startDate,
+            endDate,
+            search,
+            status,
+            department,
+            page = 1,
+            limit = 20,
+        } = req.query;
 
+        // ─── Validation ───────────────────────────────────────────────
         if (!companyId) {
-            return res.status(400).json({ success: false, message: "Company ID is required" });
+            return res.status(400).json(formatResponse(false, "companyId is required"));
         }
 
-        const todayStart = new Date();
-        todayStart.setHours(0, 0, 0, 0);
-        const todayEnd = new Date();
-        todayEnd.setHours(23, 59, 59, 999);
-
-        const start = startDate ? new Date(startDate) : todayStart;
-        const end = endDate ? new Date(endDate) : todayEnd;
-
-        // Fetch all active employees matching filters
-        const employeeQuery = { company: companyId, isActive: true };
-        if (department) employeeQuery.department = department;
-        if (search) {
-            employeeQuery.$or = [
-                { firstName: { $regex: search, $options: "i" } },
-                { lastName: { $regex: search, $options: "i" } },
-                { fullName: { $regex: search, $options: "i" } }
-            ];
+        if (!mongoose.Types.ObjectId.isValid(companyId)) {
+            return res.status(400).json(formatResponse(false, "Invalid companyId"));
         }
 
-        const employees = await AuthEmployee.find(employeeQuery)
-            .select("firstName lastName fullName department image")
-            .lean();
+        // ─── Date Range (default = today) ─────────────────────────────
+        const now = new Date();
 
-        // Fetch attendance records in date range
-        const attendanceRecords = await Attendance.find({
-            company: companyId,
-            date: { $gte: start, $lte: end }
-        }).lean();
+        const start = startDate
+            ? new Date(new Date(startDate).setHours(0, 0, 0, 0))
+            : new Date(now.getFullYear(), now.getMonth(), now.getDate(), 0, 0, 0, 0);
 
-        // Merge logic
-        // If it's a single day check, we show all employees (Left Join)
-        // If it's a range, we show all attendance records found (Inner Join pattern usually better for logs)
-        
-        const isSingleDay = start.toDateString() === end.toDateString();
+        const end = endDate
+            ? new Date(new Date(endDate).setHours(23, 59, 59, 999))
+            : new Date(now.getFullYear(), now.getMonth(), now.getDate(), 23, 59, 59, 999);
 
-        let result = [];
+        const pageNum = Math.max(1, parseInt(page));
+        const limitNum = Math.max(1, Math.min(100, parseInt(limit)));
+        const skip = (pageNum - 1) * limitNum;
 
-        if (isSingleDay) {
-            result = employees.map(emp => {
-                const record = attendanceRecords.find(r => r.employee.toString() === emp._id.toString());
-                return {
-                    employee: emp,
-                    checkIn: record?.inTime || null,
-                    checkOut: record?.outTime || null,
-                    status: record?.status || "Absent",
-                    workingHours: record?.workingHours || 0
-                };
+        // ─── Stage 1: Match attendance by company + date range ────────
+        const attendanceMatchConditions = {
+            company: new mongoose.Types.ObjectId(companyId),
+            date: { $gte: start, $lte: end },
+        };
+
+        if (status) {
+            const VALID_STATUSES = ["Present", "Absent", "Leave", "Half Day", "Weekly Off", "Holiday", "Late"];
+            if (!VALID_STATUSES.includes(status)) {
+                return res.status(400).json(formatResponse(false, `Invalid status. Allowed: ${VALID_STATUSES.join(", ")}`));
+            }
+            attendanceMatchConditions.status = status;
+        }
+
+        const matchAttendance = {
+            $match: attendanceMatchConditions,
+        };
+
+        // ─── Stage 2: Lookup employee (replaces populate) ─────────────
+        const lookupEmployee = {
+            $lookup: {
+                from: "authemployees",                   // MongoDB collection name
+                localField: "employee",
+                foreignField: "_id",
+                as: "employeeData",
+                pipeline: [
+                    {
+                        $project: {
+                            firstName: 1,
+                            lastName: 1,
+                            fullName: 1,
+                            email: 1,
+                            designation: 1,
+                            department: 1,
+                            isActive: 1,
+                            image: 1,
+                        },
+                    },
+                ],
+            },
+        };
+
+        // ─── Stage 3: Unwind (one employee per attendance doc) ────────
+        const unwindEmployee = {
+            $unwind: {
+                path: "$employeeData",
+                preserveNullAndEmptyArrays: true,        // keep if employee deleted
+            },
+        };
+
+        // ─── Stage 4: Dynamic filter on employee fields ───────────────
+        const employeeMatchConditions = [
+            { $eq: ["$employeeData.isActive", true] },   // always active only
+        ];
+
+        if (department) {
+            employeeMatchConditions.push({
+                $eq: ["$employeeData.department", department],
             });
-        } else {
-            result = attendanceRecords.map(record => {
-                const emp = employees.find(e => e._id.toString() === record.employee.toString());
-                if (!emp) return null; // Filtered out by employee search/dept
-                return {
-                    employee: emp,
-                    date: record.date,
-                    checkIn: record.inTime,
-                    checkOut: record.outTime,
-                    status: record.status,
-                    workingHours: record.workingHours
-                };
-            }).filter(item => item !== null);
         }
 
-        res.status(200).json({
-            success: true,
-            totalRows: result.length,
-            data: result
-        });
+        if (search) {
+            const regex = new RegExp(search.trim(), "i");
+            employeeMatchConditions.push({
+                $or: [
+                    { $regexMatch: { input: "$employeeData.fullName", regex } },
+                    { $regexMatch: { input: "$employeeData.firstName", regex } },
+                    { $regexMatch: { input: "$employeeData.lastName", regex } },
+                    { $regexMatch: { input: "$employeeData.email", regex } },
+                    { $regexMatch: { input: "$employeeData.designation", regex } },
+                ],
+            });
+        }
 
-    } catch (error) {
-        next(error);
+        const matchEmployee = {
+            $match: {
+                $expr: { $and: employeeMatchConditions },
+            },
+        };
+
+        // ─── Stage 5: Shape final output fields ───────────────────────
+        const projectFields = {
+            $project: {
+                _id: 1,
+                date: 1,
+                inTime: 1,
+                outTime: 1,
+                workingHours: 1,
+                status: 1,
+                createdAt: 1,
+                employee: "$employeeData",
+            },
+        };
+
+        // ─── Stage 6: Sort ────────────────────────────────────────────
+        const sortStage = {
+            $sort: { date: -1, inTime: 1 },
+        };
+
+        // ─── Stage 7: Facet — data + total count in one query ─────────
+        const facetStage = {
+            $facet: {
+                data: [
+                    { $skip: skip },
+                    { $limit: limitNum },
+                ],
+                totalCount: [
+                    { $count: "count" },
+                ],
+            },
+        };
+
+        // ─── Build & Run Pipeline ─────────────────────────────────────
+        const pipeline = [
+            matchAttendance,
+            lookupEmployee,
+            unwindEmployee,
+            matchEmployee,
+            projectFields,
+            sortStage,
+            facetStage,
+        ];
+
+        const [result] = await Attendance.aggregate(pipeline);
+
+        const records = result?.data || [];
+        const total = result?.totalCount?.[0]?.count || 0;
+
+        // ─── Response ─────────────────────────────────────────────────
+        return res.status(200).json(formatResponse(true, "Attendance list retrieved successfully", records, {
+            page: parseInt(page),
+            limit: parseInt(limit),
+            totalPages: Math.ceil(total / limit),
+            totalRecords: total
+        }));
+
+
+    } catch (err) {
+        console.error("getCompanyAttendanceList error:", err);
+        return res.status(500).json(formatResponse(false, "Server Error", null, { error: err.message }));
     }
-};
+});

@@ -9,6 +9,9 @@ const connectDB = require('./config/db');
 const path = require('path');
 const faceService = require('./utils/face.service');
 
+const http = require('http');
+const { initSocket } = require('./utils/socket');
+
 const port = process.env.PORT || 5000;
 
 // Connect to Database
@@ -20,6 +23,10 @@ faceService.loadModels().catch(err => {
 });
 
 const app = express();
+const server = http.createServer(app);
+
+// Initialize Socket.io
+initSocket(server);
 
 // Middleware
 app.use(cors());
@@ -43,4 +50,4 @@ app.get('/', (req, res) => {
 // Error Middleware
 app.use(errorHandler);
 
-app.listen(port, () => console.log(`Server started on port ${port}`));
+server.listen(port, () => console.log(`Server started on port ${port}`));

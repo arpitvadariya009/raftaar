@@ -19,6 +19,9 @@ const visitorRoutes = require('./visitorRoutes');
 const documentRoutes = require('./documentRoutes');
 const courierRoutes = require('./courierRoutes');
 const securityRoutes = require('./securityRoutes');
+const taskRoutes = require('./taskRoutes');
+const locationRoutes = require('./locationRoutes');
+const chatRoutes = require('./chatRoutes');
 
 router.use('/auth', authRoutes);
 router.use('/companies', companyRoutes);
@@ -39,5 +42,8 @@ router.use('/visitors', visitorRoutes);
 router.use('/documents', documentRoutes);
 router.use('/couriers', courierRoutes);
 router.use('/security', securityRoutes);
+router.use('/tasks', taskRoutes);
+router.use('/location', locationRoutes);
+router.use('/chat', chatRoutes);
 
 module.exports = router;
