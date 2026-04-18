@@ -15,6 +15,9 @@ const leaveRoutes = require('./leaveRoutes');
 const companyDashboardRoutes = require('./companyDashboardRoutes');
 const gatePassRoutes = require('./gatePassRoutes');
 const weeklyOffRoutes = require('./weeklyOffRoutes');
+const visitorRoutes = require('./visitorRoutes');
+const documentRoutes = require('./documentRoutes');
+const courierRoutes = require('./courierRoutes');
 
 router.use('/auth', authRoutes);
 router.use('/companies', companyRoutes);
@@ -31,5 +34,8 @@ router.use('/leaves', leaveRoutes);
 router.use('/company-dashboard', companyDashboardRoutes);
 router.use('/gate-passes', gatePassRoutes);
 router.use('/weekly-off', weeklyOffRoutes);
+router.use('/visitors', visitorRoutes);
+router.use('/documents', documentRoutes);
+router.use('/couriers', courierRoutes);
 
 module.exports = router;

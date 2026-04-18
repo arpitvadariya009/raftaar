@@ -11,17 +11,17 @@ const mongoose = require("mongoose");
 exports.applyGatePass = async (req, res, next) => {
     try {
         const { employeeId, companyId, gatePassType, date, startTime, endTime, reason } = req.body;
- 
+
         if (!employeeId || !companyId || !gatePassType || !date || !startTime || !endTime || !reason) {
             return res.status(400).json({ success: false, message: "Missing required fields" });
         }
- 
+
         // Subscription check
         const activeSubscription = await Subscription.findOne({ company: companyId, status: 'Active' });
         if (!activeSubscription) {
             return res.status(403).json({ success: false, message: "No active subscription found for this company" });
         }
- 
+
         const newGatePass = await GatePass.create({
             employee: employeeId,
             company: companyId,
@@ -50,7 +50,7 @@ exports.applyGatePass = async (req, res, next) => {
 exports.getAllGatePasses = async (req, res, next) => {
     try {
         const { companyId } = req.params;
-        const { page = 1, limit = 10, search, status, sortBy = 'createdAt', order = 'desc' } = req.query;
+        const { page = 1, limit = 10, search, status, sortBy = 'createdAt', order = 'desc', startDate, endDate } = req.query;
 
         const sortOrder = order === 'desc' ? -1 : 1;
 
@@ -99,7 +99,19 @@ exports.getAllGatePasses = async (req, res, next) => {
             });
         }
 
-        // Sorting
+        // Date Range Filter
+        if (startDate || endDate) {
+            const dateFilter = {};
+            if (startDate) dateFilter.$gte = new Date(startDate);
+            if (endDate) {
+                const end = new Date(endDate);
+                end.setHours(23, 59, 59, 999);
+                dateFilter.$lte = end;
+            }
+            pipeline.push({ $match: { date: dateFilter } });
+        }
+
+        // Sorting  
         pipeline.push({ $sort: { [sortBy]: sortOrder } });
 
         // Clone for Count Pipeline

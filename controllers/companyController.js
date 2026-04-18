@@ -117,6 +117,12 @@ exports.registerCompany = asyncHandler(async (req, res) => {
         const companyResponse = company.toObject();
         companyResponse.password = password;
 
+        // Generate and store token (persistent)
+        const token = jwt.sign({ id: company._id }, process.env.JWT_SECRET);
+        company.token = token;
+        await company.save();
+        companyResponse.token = token;
+
         // Send welcome email
         mailService.sendEmail(
             company.hrEmail, 
@@ -147,12 +153,11 @@ exports.loginCompany = asyncHandler(async (req, res) => {
         const company = await Company.findById(_id).select('+password');
 
         if (company && (await company.matchPassword(password))) {
-            const token = jwt.sign({ id: company._id }, process.env.JWT_SECRET, {
-                expiresIn: '30d',
-            });
-
-            company.token = token;
-            await company.save();
+            // Use existing token or generate one if missing (for legacy records)
+            if (!company.token) {
+                company.token = jwt.sign({ id: company._id }, process.env.JWT_SECRET);
+                await company.save();
+            }
 
             res.json(formatResponse(true, 'Login successful', {
                 _id: company._id,

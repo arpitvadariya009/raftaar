@@ -36,7 +36,7 @@ const gatePassSchema = new mongoose.Schema(
         },
         status: {
             type: Number,
-            enum: [0, 1, 2], // 0: Pending, 1: Approved, 2: Rejected
+            enum: [0, 1, 2, 4, 5], // 0: Pending, 1: Approved, 2: Rejected , 4 EXITED , 5 DENIED
             default: 0
         }
     },
