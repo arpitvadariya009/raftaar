@@ -9,7 +9,7 @@ exports.createVisitor = asyncHandler(async (req, res) => {
     try {
         const visitorData = { ...req.body };
         if (req.file) {
-            visitorData.image = req.file.path.replace(/\\/g, '/');
+            visitorData.image = req.file.filename;
         }
         const visitor = await Visitor.create(visitorData);
         res.status(201).json(formatResponse(true, 'Visitor registered successfully', visitor));
@@ -112,7 +112,7 @@ exports.updateVisitor = asyncHandler(async (req, res) => {
     try {
         const visitorData = { ...req.body };
         if (req.file) {
-            visitorData.image = req.file.path.replace(/\\/g, '/');
+            visitorData.image = req.file.filename;
         }
 
         const visitor = await Visitor.findById(req.params.id);

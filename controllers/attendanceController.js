@@ -228,3 +228,172 @@ exports.getDashboardStats = async (req, res, next) => {
         next(error);
     }
 };
+
+/**
+ * @desc    Get Company-wide Attendance Statistics
+ * @route   GET /api/attendance/company-stats
+ * @access  Private (Admin / Guard)
+ */
+exports.getCompanyAttendanceStats = async (req, res, next) => {
+    try {
+        const { companyId, startDate, endDate } = req.query;
+
+        if (!companyId) {
+            return res.status(400).json({ success: false, message: "Company ID is required" });
+        }
+
+        const todayStart = new Date();
+        todayStart.setHours(0, 0, 0, 0);
+        const todayEnd = new Date();
+        todayEnd.setHours(23, 59, 59, 999);
+
+        const start = startDate ? new Date(startDate) : todayStart;
+        const end = endDate ? new Date(endDate) : todayEnd;
+
+        if (endDate && !startDate) start.setTime(end.getTime() - (end.getTime() % (24 * 60 * 60 * 1000)));
+        if (startDate && !endDate) end.setTime(start.getTime() + (23 * 60 * 60 * 1000) + (59 * 60 * 1000) + 59999);
+
+        // Run queries in parallel
+        const [totalEmployees, attendanceStats] = await Promise.all([
+            AuthEmployee.countDocuments({ company: companyId, isActive: true }),
+            Attendance.aggregate([
+                {
+                    $match: {
+                        company: new require('mongoose').Types.ObjectId(companyId),
+                        date: { $gte: start, $lte: end }
+                    }
+                },
+                {
+                    $group: {
+                        _id: "$status",
+                        count: { $sum: 1 }
+                    }
+                }
+            ])
+        ]);
+
+        let present = 0;
+        let absent = 0;
+        let late = 0;
+        let leave = 0;
+        let halfDay = 0;
+
+        attendanceStats.forEach(stat => {
+            if (stat._id === "Present") present = stat.count;
+            if (stat._id === "Late") late = stat.count;
+            if (stat._id === "Absent") absent = stat.count;
+            if (stat._id === "Leave") leave = stat.count;
+            if (stat._id === "Half Day") halfDay = stat.count;
+        });
+
+        // If today, calculate missing employees as absent
+        const now = new Date();
+        let calculatedAbsent = absent;
+        if (start <= now && end >= now) {
+            const accountedFor = present + late + leave + halfDay + absent;
+            calculatedAbsent = Math.max(0, totalEmployees - accountedFor) + absent;
+        }
+
+        res.status(200).json({
+            success: true,
+            data: {
+                totalEmployees,
+                present: present,
+                late: late,
+                absent: calculatedAbsent,
+                leave: leave,
+                halfDay: halfDay
+            }
+        });
+
+    } catch (error) {
+        next(error);
+    }
+};
+
+/**
+ * @desc    Get Detailed Company Attendance List
+ * @route   GET /api/attendance/company-list
+ * @access  Private (Admin / Guard)
+ */
+exports.getCompanyAttendanceList = async (req, res, next) => {
+    try {
+        const { companyId, startDate, endDate, search, department } = req.query;
+
+        if (!companyId) {
+            return res.status(400).json({ success: false, message: "Company ID is required" });
+        }
+
+        const todayStart = new Date();
+        todayStart.setHours(0, 0, 0, 0);
+        const todayEnd = new Date();
+        todayEnd.setHours(23, 59, 59, 999);
+
+        const start = startDate ? new Date(startDate) : todayStart;
+        const end = endDate ? new Date(endDate) : todayEnd;
+
+        // Fetch all active employees matching filters
+        const employeeQuery = { company: companyId, isActive: true };
+        if (department) employeeQuery.department = department;
+        if (search) {
+            employeeQuery.$or = [
+                { firstName: { $regex: search, $options: "i" } },
+                { lastName: { $regex: search, $options: "i" } },
+                { fullName: { $regex: search, $options: "i" } }
+            ];
+        }
+
+        const employees = await AuthEmployee.find(employeeQuery)
+            .select("firstName lastName fullName department image")
+            .lean();
+
+        // Fetch attendance records in date range
+        const attendanceRecords = await Attendance.find({
+            company: companyId,
+            date: { $gte: start, $lte: end }
+        }).lean();
+
+        // Merge logic
+        // If it's a single day check, we show all employees (Left Join)
+        // If it's a range, we show all attendance records found (Inner Join pattern usually better for logs)
+        
+        const isSingleDay = start.toDateString() === end.toDateString();
+
+        let result = [];
+
+        if (isSingleDay) {
+            result = employees.map(emp => {
+                const record = attendanceRecords.find(r => r.employee.toString() === emp._id.toString());
+                return {
+                    employee: emp,
+                    checkIn: record?.inTime || null,
+                    checkOut: record?.outTime || null,
+                    status: record?.status || "Absent",
+                    workingHours: record?.workingHours || 0
+                };
+            });
+        } else {
+            result = attendanceRecords.map(record => {
+                const emp = employees.find(e => e._id.toString() === record.employee.toString());
+                if (!emp) return null; // Filtered out by employee search/dept
+                return {
+                    employee: emp,
+                    date: record.date,
+                    checkIn: record.inTime,
+                    checkOut: record.outTime,
+                    status: record.status,
+                    workingHours: record.workingHours
+                };
+            }).filter(item => item !== null);
+        }
+
+        res.status(200).json({
+            success: true,
+            totalRows: result.length,
+            data: result
+        });
+
+    } catch (error) {
+        next(error);
+    }
+};

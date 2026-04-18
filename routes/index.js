@@ -18,6 +18,7 @@ const weeklyOffRoutes = require('./weeklyOffRoutes');
 const visitorRoutes = require('./visitorRoutes');
 const documentRoutes = require('./documentRoutes');
 const courierRoutes = require('./courierRoutes');
+const securityRoutes = require('./securityRoutes');
 
 router.use('/auth', authRoutes);
 router.use('/companies', companyRoutes);
@@ -37,5 +38,6 @@ router.use('/weekly-off', weeklyOffRoutes);
 router.use('/visitors', visitorRoutes);
 router.use('/documents', documentRoutes);
 router.use('/couriers', courierRoutes);
+router.use('/security', securityRoutes);
 
 module.exports = router;
