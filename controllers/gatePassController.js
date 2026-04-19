@@ -193,7 +193,7 @@ exports.updateGatePassStatus = async (req, res, next) => {
         const { id } = req.params;
         const { status } = req.body;
 
-        if (![1, 2, 3, 4].includes(Number(status))) {
+        if (![0, 1, 2, 3, 4].includes(Number(status))) {
             return res.status(400).json({ success: false, message: "Invalid status" });
         }
 
