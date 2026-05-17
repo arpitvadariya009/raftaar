@@ -1,0 +1,529 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Raftaar HRMS - Live Socket.io Test Client</title>
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&family=Space+Grotesk:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-color: #0b0f19;
+            --card-bg: rgba(255, 255, 255, 0.03);
+            --border-color: rgba(255, 255, 255, 0.08);
+            --primary: #4f46e5;
+            --primary-hover: #6366f1;
+            --success: #10b981;
+            --error: #ef4444;
+            --warning: #f59e0b;
+            --text-main: #f3f4f6;
+            --text-muted: #9ca3af;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Outfit', sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 2rem;
+            overflow-x: hidden;
+        }
+
+        /* Ambient background glow */
+        .glow {
+            position: absolute;
+            width: 600px;
+            height: 600px;
+            background: radial-gradient(circle, rgba(79, 70, 229, 0.15) 0%, rgba(0, 0, 0, 0) 70%);
+            top: -10%;
+            left: -10%;
+            z-index: -1;
+            filter: blur(50px);
+        }
+
+        .glow-right {
+            position: absolute;
+            width: 500px;
+            height: 500px;
+            background: radial-gradient(circle, rgba(16, 185, 129, 0.1) 0%, rgba(0, 0, 0, 0) 70%);
+            bottom: -10%;
+            right: -10%;
+            z-index: -1;
+            filter: blur(50px);
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 2rem;
+            z-index: 10;
+        }
+
+        header h1 {
+            font-family: 'Space Grotesk', sans-serif;
+            font-size: 2.5rem;
+            font-weight: 800;
+            background: linear-gradient(135deg, #a78bfa 0%, #60a5fa 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 0.5rem;
+        }
+
+        header p {
+            color: var(--text-muted);
+            font-size: 1.1rem;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 1200px;
+            display: grid;
+            grid-template-columns: 1fr 2fr;
+            gap: 2rem;
+            z-index: 10;
+        }
+
+        @media (max-width: 900px) {
+            .container {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .card {
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border-radius: 20px;
+            padding: 1.8rem;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+            transition: transform 0.3s ease, border-color 0.3s ease;
+        }
+
+        .card:hover {
+            border-color: rgba(255, 255, 255, 0.15);
+        }
+
+        .card h2 {
+            font-family: 'Space Grotesk', sans-serif;
+            font-size: 1.3rem;
+            font-weight: 700;
+            margin-bottom: 1.2rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 0.8rem;
+        }
+
+        .form-group {
+            margin-bottom: 1.2rem;
+        }
+
+        .form-group label {
+            display: block;
+            font-size: 0.85rem;
+            color: var(--text-muted);
+            margin-bottom: 0.4rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        input {
+            width: 100%;
+            background: rgba(0, 0, 0, 0.2);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 0.8rem 1rem;
+            color: var(--text-main);
+            font-family: inherit;
+            font-size: 0.95rem;
+            transition: all 0.3s ease;
+        }
+
+        input:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.25);
+        }
+
+        button {
+            width: 100%;
+            background: var(--primary);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            padding: 0.8rem 1.2rem;
+            font-family: inherit;
+            font-weight: 600;
+            font-size: 0.95rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+        }
+
+        button:hover {
+            background: var(--primary-hover);
+            transform: translateY(-1px);
+        }
+
+        button:active {
+            transform: translateY(1px);
+        }
+
+        .btn-success {
+            background: var(--success);
+        }
+        .btn-success:hover {
+            background: #059669;
+        }
+
+        /* Status Badge */
+        .status-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.4rem 0.8rem;
+            border-radius: 30px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            background: rgba(239, 68, 68, 0.1);
+            color: var(--error);
+            width: fit-content;
+            margin-top: 0.5rem;
+        }
+
+        .status-badge.connected {
+            background: rgba(16, 185, 129, 0.1);
+            color: var(--success);
+        }
+
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: var(--error);
+            box-shadow: 0 0 8px var(--error);
+        }
+
+        .status-badge.connected .status-dot {
+            background: var(--success);
+            box-shadow: 0 0 8px var(--success);
+        }
+
+        /* Logs Console */
+        .console-container {
+            display: flex;
+            flex-direction: column;
+            height: 600px;
+        }
+
+        .console-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 0.8rem;
+        }
+
+        .clear-btn {
+            background: transparent;
+            border: 1px solid var(--border-color);
+            color: var(--text-muted);
+            padding: 0.4rem 0.8rem;
+            border-radius: 6px;
+            font-size: 0.8rem;
+            width: auto;
+        }
+
+        .clear-btn:hover {
+            background: rgba(255, 255, 255, 0.05);
+            color: var(--text-main);
+        }
+
+        .console-logs {
+            flex-grow: 1;
+            background: rgba(0, 0, 0, 0.4);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 1rem;
+            font-family: 'Space Grotesk', monospace;
+            font-size: 0.85rem;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 0.6rem;
+            scroll-behavior: smooth;
+        }
+
+        .log-entry {
+            border-left: 3px solid var(--text-muted);
+            padding-left: 0.8rem;
+            padding-top: 0.2rem;
+            padding-bottom: 0.2rem;
+            animation: slideIn 0.2s ease-out;
+        }
+
+        .log-entry.info { border-color: var(--primary); }
+        .log-entry.success { border-color: var(--success); }
+        .log-entry.error { border-color: var(--error); }
+        .log-entry.warning { border-color: var(--warning); }
+
+        .log-time {
+            color: var(--text-muted);
+            font-size: 0.75rem;
+            margin-right: 0.5rem;
+        }
+
+        .log-title {
+            font-weight: 700;
+            margin-bottom: 0.2rem;
+        }
+
+        .log-body {
+            background: rgba(255, 255, 255, 0.02);
+            border-radius: 4px;
+            padding: 0.4rem;
+            margin-top: 0.2rem;
+            white-space: pre-wrap;
+            word-break: break-all;
+            color: #d1d5db;
+            border: 1px solid rgba(255, 255, 255, 0.03);
+        }
+
+        @keyframes slideIn {
+            from { opacity: 0; transform: translateX(-10px); }
+            to { opacity: 1; transform: translateX(0); }
+        }
+
+        /* Pill tags */
+        .pill {
+            display: inline-block;
+            padding: 0.2rem 0.5rem;
+            border-radius: 4px;
+            font-size: 0.75rem;
+            font-weight: bold;
+            text-transform: uppercase;
+            margin-right: 0.4rem;
+        }
+        .pill.in { background: rgba(79, 70, 229, 0.2); color: #a5b4fc; }
+        .pill.out { background: rgba(16, 185, 129, 0.2); color: #6ee7b7; }
+    </style>
+</head>
+<body>
+    <div class="glow"></div>
+    <div class="glow-right"></div>
+
+    <header>
+        <h1>⚡ Raftaar HRMS Live Socket Terminal</h1>
+        <p>Real-time updates, Location and Chat listener</p>
+    </header>
+
+    <div class="container">
+        <!-- Control Panel -->
+        <div class="card" style="display: flex; flex-direction: column; gap: 1.5rem;">
+            <!-- Server Connection -->
+            <div>
+                <h2>🔌 Connection Setup</h2>
+                <div class="form-group">
+                    <label for="server-url">Socket Server URL</label>
+                    <input type="text" id="server-url" value="http://localhost:1911">
+                </div>
+                <button id="connect-btn">Connect Server</button>
+                <div id="status-badge" class="status-badge">
+                    <div class="status-dot"></div>
+                    <span id="status-text">Disconnected</span>
+                </div>
+            </div>
+
+            <!-- Join Personal Channel -->
+            <div>
+                <h2>👤 Personal Channel (join)</h2>
+                <p style="font-size: 0.8rem; color: var(--text-muted); margin-bottom: 0.8rem;">
+                    Binds socket to Employee ID for: Location Updates & Notifications
+                </p>
+                <div class="form-group">
+                    <label for="employee-id">Employee ID</label>
+                    <input type="text" id="employee-id" value="69cab1afccbfabf7be03293a">
+                </div>
+                <button id="join-btn" class="btn-success">Join Personal Channel</button>
+            </div>
+
+            <!-- Join Chat Room -->
+            <div>
+                <h2>💬 Chat Room Channel (join-chat)</h2>
+                <p style="font-size: 0.8rem; color: var(--text-muted); margin-bottom: 0.8rem;">
+                    Binds socket to Chat Room ID for live messages
+                </p>
+                <div class="form-group">
+                    <label for="chat-room-id">Chat Room ID</label>
+                    <input type="text" id="chat-room-id" value="6a0a287abdeb3b436a1ceaad">
+                </div>
+                <button id="join-chat-btn" class="btn-success">Join Chat Room</button>
+            </div>
+        </div>
+
+        <!-- Terminal Console -->
+        <div class="card console-container">
+            <div class="console-header">
+                <h2>🖥️ Live Event Stream</h2>
+                <button id="clear-btn" class="clear-btn">Clear Logs</button>
+            </div>
+            <div id="console-logs" class="console-logs">
+                <div class="log-entry info">
+                    <span class="log-time">[System Setup]</span>
+                    <div class="log-title">Welcome to Raftaar Live Socket Terminal</div>
+                    <div class="log-body">Adjust Server URL and hit "Connect Server" to begin listening to events.</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Include Socket.io Client Library -->
+    <script src="https://cdn.socket.io/4.7.5/socket.io.min.js"></script>
+    <script>
+        let socket;
+        
+        // Dom Elements
+        const serverUrlInput = document.getElementById('server-url');
+        const connectBtn = document.getElementById('connect-btn');
+        const statusBadge = document.getElementById('status-badge');
+        const statusText = document.getElementById('status-text');
+        
+        const employeeIdInput = document.getElementById('employee-id');
+        const joinBtn = document.getElementById('join-btn');
+        
+        const chatRoomIdInput = document.getElementById('chat-room-id');
+        const joinChatBtn = document.getElementById('join-chat-btn');
+        
+        const consoleLogs = document.getElementById('console-logs');
+        const clearBtn = document.getElementById('clear-btn');
+
+        // Log to custom console
+        function log(title, data, type = 'info') {
+            const time = new Date().toLocaleTimeString();
+            const entry = document.createElement('div');
+            entry.className = `log-entry ${type}`;
+            
+            let dataString = typeof data === 'object' ? JSON.stringify(data, null, 2) : String(data);
+            
+            entry.innerHTML = `
+                <div>
+                    <span class="log-time">${time}</span>
+                    <span class="log-title">${title}</span>
+                </div>
+                <pre class="log-body">${dataString}</pre>
+            `;
+            
+            consoleLogs.appendChild(entry);
+            consoleLogs.scrollTop = consoleLogs.scrollHeight;
+        }
+
+        // Connect Handler
+        connectBtn.addEventListener('click', () => {
+            if (socket && socket.connected) {
+                socket.disconnect();
+                return;
+            }
+
+            const url = serverUrlInput.value.trim();
+            log('Connecting...', url, 'warning');
+
+            socket = io(url, {
+                transports: ['websocket', 'polling']
+            });
+
+            socket.on('connect', () => {
+                statusBadge.className = 'status-badge connected';
+                statusText.innerText = 'Connected';
+                connectBtn.innerText = 'Disconnect Server';
+                connectBtn.style.background = 'var(--error)';
+                log('⚡ Connected successfully to Socket Server', `Socket ID: ${socket.id}`, 'success');
+            });
+
+            socket.on('disconnect', (reason) => {
+                statusBadge.className = 'status-badge';
+                statusText.innerText = 'Disconnected';
+                connectBtn.innerText = 'Connect Server';
+                connectBtn.style.background = 'var(--primary)';
+                log('🔌 Disconnected from Server', `Reason: ${reason}`, 'error');
+            });
+
+            socket.on('connect_error', (err) => {
+                log('❌ Connection Error', err.message, 'error');
+            });
+
+            // Set up all event listeners
+            setupEventListeners();
+        });
+
+        // Setup Event Receivers
+        function setupEventListeners() {
+            if (!socket) return;
+
+            // 1. Live Chat Message
+            socket.on('receive-message', (data) => {
+                log('💬 Event: [receive-message]', data, 'success');
+            });
+
+            // 2. Personal Chat Message Notification (when not in same chat room)
+            socket.on('new-message-notification', (data) => {
+                log('🔔 Event: [new-message-notification]', data, 'success');
+            });
+
+            // 3. Location & Attendance Live Stats Update
+            socket.on('location-update', (data) => {
+                log('📍 Event: [location-update]', data, 'success');
+            });
+
+            // 4. General Notification
+            socket.on('notification', (data) => {
+                log('📣 Event: [notification]', data, 'warning');
+            });
+        }
+
+        // Join Personal Room
+        joinBtn.addEventListener('click', () => {
+            if (!socket || !socket.connected) {
+                alert('Pehle Connect Server par click karke connect karein!');
+                return;
+            }
+            const id = employeeIdInput.value.trim();
+            if (!id) return;
+            
+            socket.emit('join', id);
+            log('📤 Emit: [join] (Personal Channel)', `Sent employeeId: ${id}`, 'info');
+        });
+
+        // Join Chat Room
+        joinChatBtn.addEventListener('click', () => {
+            if (!socket || !socket.connected) {
+                alert('Pehle Connect Server par click karke connect karein!');
+                return;
+            }
+            const roomId = chatRoomIdInput.value.trim();
+            if (!roomId) return;
+            
+            socket.emit('join-chat', roomId);
+            log('📤 Emit: [join-chat] (Chat Room)', `Sent roomId: ${roomId}`, 'info');
+        });
+
+        // Clear Logs
+        clearBtn.addEventListener('click', () => {
+            consoleLogs.innerHTML = '';
+            log('Console cleared', 'All logs wiped clean.', 'info');
+        });
+    </script>
+</body>
+</html>

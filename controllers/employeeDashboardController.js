@@ -1,4 +1,5 @@
 const asyncHandler = require('express-async-handler');
+const mongoose = require('mongoose');
 const AuthEmployee = require('../models/AuthEmployee.model');
 const Attendance = require('../models/Attendance');
 const LeaveRequest = require('../models/LeaveRequest');
@@ -10,13 +11,31 @@ const { formatResponse } = require('../utils/helpers');
 // @access  Private
 exports.getEmployeeDashboard = asyncHandler(async (req, res) => {
     try {
-        const { employeeId, companyId } = req.query;
+        const { employeeId, companyId, date } = req.query;
 
         if (!employeeId || !companyId) {
             return res.status(400).json(formatResponse(false, 'Employee ID and Company ID are required'));
         }
 
-        const now = new Date();
+        // Validate ObjectId format before DB calls
+        if (!mongoose.Types.ObjectId.isValid(employeeId)) {
+            return res.status(400).json(formatResponse(false, 'Invalid employeeId format'));
+        }
+        if (!mongoose.Types.ObjectId.isValid(companyId)) {
+            return res.status(400).json(formatResponse(false, 'Invalid companyId format'));
+        }
+
+        // Optional date param (format: YYYY-MM-DD) — default: today
+        let now;
+        if (date) {
+            now = new Date(date);
+            if (isNaN(now.getTime())) {
+                return res.status(400).json(formatResponse(false, 'Invalid date format. Use YYYY-MM-DD'));
+            }
+        } else {
+            now = new Date(); // default: aaj ki date
+        }
+
         const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate());
         const endOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 23, 59, 59, 999);
 
@@ -25,7 +44,8 @@ exports.getEmployeeDashboard = asyncHandler(async (req, res) => {
             todaysBirthdays,
             todaysTasks,
             onLeaveEmployees,
-            attendanceStats
+            attendanceStats,
+            todayAttendance   // 🆕 aaj ka attendance status
         ] = await Promise.all([
             // 1. Employee Profile Info
             AuthEmployee.findById(employeeId).select('firstName lastName fullName image department designation'),
@@ -60,7 +80,7 @@ exports.getEmployeeDashboard = asyncHandler(async (req, res) => {
             Attendance.aggregate([
                 {
                     $match: {
-                        employee: new require('mongoose').Types.ObjectId(employeeId),
+                        employee: new mongoose.Types.ObjectId(employeeId),
                         date: { 
                             $gte: new Date(now.getFullYear(), now.getMonth(), 1),
                             $lte: endOfToday
@@ -76,7 +96,13 @@ exports.getEmployeeDashboard = asyncHandler(async (req, res) => {
                         totalDays: { $sum: 1 }
                     }
                 }
-            ])
+            ]),
+
+            // 6. 🆕 Aaj ka attendance record (toggle state ke liye)
+            Attendance.findOne({
+                employee: employeeId,
+                date: startOfToday
+            }).select('inTime outTime sessions status workingHours')
         ]);
 
         // Calculate attendance percentage
@@ -96,6 +122,19 @@ exports.getEmployeeDashboard = asyncHandler(async (req, res) => {
             updatedAt: { $gte: startOfWeek }
         });
 
+        // Determine current toggle state
+        let toggleStatus = 'OUT'; // default
+        if (todayAttendance) {
+            if (todayAttendance.sessions && todayAttendance.sessions.length > 0) {
+                // New records — sessions se check karo
+                const lastSession = todayAttendance.sessions[todayAttendance.sessions.length - 1];
+                toggleStatus = (lastSession.in && !lastSession.out) ? 'IN' : 'OUT';
+            } else if (todayAttendance.inTime && !todayAttendance.outTime) {
+                // Old records (without sessions) — inTime/outTime fallback
+                toggleStatus = 'IN';
+            }
+        }
+
         res.json(formatResponse(true, 'Employee dashboard data retrieved', {
             profile: employee,
             todaysBirthdays,
@@ -105,6 +144,14 @@ exports.getEmployeeDashboard = asyncHandler(async (req, res) => {
                 attendancePercentage,
                 leaveBalance,
                 tasksDoneThisWeek
+            },
+            // 🆕 App toggle restore ke liye
+            todayAttendance: {
+                toggleStatus,          // 'IN' ya 'OUT' — toggle seedha set karo
+                inTime:  todayAttendance?.inTime  || null,
+                outTime: todayAttendance?.outTime || null,
+                workingHours: todayAttendance?.workingHours || 0,
+                sessions: todayAttendance?.sessions || []
             }
         }));
     } catch (error) {

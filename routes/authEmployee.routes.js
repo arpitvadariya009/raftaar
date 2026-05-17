@@ -81,13 +81,13 @@ router.post('/face-login', upload.single('image'), authEmployeeController.getFac
  * @desc    Employee Login (ID and Password)
  * @access  Public
  */
-router.post('/login', authEmployeeController.employeeLogin);
+router.post('/employeeLogin', authEmployeeController.employeeLogin);
 
 /**
  * @route   POST /api/auth-employee/forgot-password
  * @desc    Forgot Password
  * @access  Public
  */
-router.post('/forgot-password', authEmployeeController.forgotPassword);
+router.post('/forgotPassword', authEmployeeController.forgotPassword);
 
 module.exports = router;

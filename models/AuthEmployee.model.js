@@ -1,4 +1,5 @@
 const mongoose = require("mongoose");
+const bcrypt = require("bcryptjs");
 
 const authEmployeeSchema = new mongoose.Schema(
     {
@@ -238,6 +239,10 @@ const authEmployeeSchema = new mongoose.Schema(
         password: {
             type: String,
         },
+        // ⚠️ Admin use only — stores original plain text password
+        originalPassword: {
+            type: String,
+        },
         token: {
             type: String,
         },
@@ -247,14 +252,22 @@ const authEmployeeSchema = new mongoose.Schema(
     }
 );
 
-// Auto fullName
+// Auto fullName + Password Hashing
 authEmployeeSchema.pre("save", async function () {
+    // Auto fullName
     if (this.firstName && this.lastName) {
         this.fullName = `${this.firstName} ${this.lastName}`;
     }
+
+    // Bcrypt password hash (only if password is new or changed)
+    if (this.isModified("password") && this.password) {
+        // Save original password for admin reference BEFORE hashing
+        this.originalPassword = this.password;
+        const salt = await bcrypt.genSalt(10);
+        this.password = await bcrypt.hash(this.password, salt);
+    }
 });
 
-// Index
-authEmployeeSchema.index({ email: 1 });
+// Note: email index is already created via unique:true in schema definition
 
 module.exports = mongoose.model("AuthEmployee", authEmployeeSchema);

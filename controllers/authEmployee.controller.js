@@ -472,6 +472,7 @@ exports.getEmployeeById = async (req, res) => {
 exports.employeeLogin = async (req, res) => {
     try {
         const { employeeId, password } = req.body;
+        const bcrypt = require('bcryptjs');
 
         if (!employeeId || !password) {
             return res.status(400).json(formatResponse(false, 'Employee ID and password are required'));
@@ -482,12 +483,14 @@ exports.employeeLogin = async (req, res) => {
             return res.status(401).json(formatResponse(false, 'Invalid credentials'));
         }
 
-        if (employee.password !== password) {
-             return res.status(401).json(formatResponse(false, 'Invalid credentials'));
-        }
-
         if (!employee.isActive) {
             return res.status(403).json(formatResponse(false, 'Account is inactive'));
+        }
+
+        // ✅ Bcrypt compare - hashed password se match karega
+        const isPasswordMatch = await bcrypt.compare(password, employee.password);
+        if (!isPasswordMatch) {
+            return res.status(401).json(formatResponse(false, 'Invalid credentials'));
         }
 
         // Generate Token
@@ -531,7 +534,7 @@ exports.forgotPassword = async (req, res) => {
             email,
             'Password Recovery - Raftaar HRMS',
             'employee-password-reset', // Reusing template
-            { fullName: employee.fullName, employeeId: employee._id, password: employee.password }
+            { fullName: employee.fullName, employeeId: employee._id, password: employee.originalPassword }
         );
 
         res.json(formatResponse(true, 'Password sent to your email'));

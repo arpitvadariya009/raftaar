@@ -2,7 +2,8 @@ const asyncHandler = require('express-async-handler');
 const ChatRoom = require('../models/ChatRoom');
 const Message = require('../models/Message');
 const { formatResponse } = require('../utils/helpers');
-const { emitMessage } = require('../utils/socket');
+const { emitMessage, getIO } = require('../utils/socket');
+const { getFileType } = require('../middleware/chatUpload');
 
 // @desc    Get or Create Direct Chat Room
 // @route   POST /api/chat/room
@@ -95,22 +96,86 @@ exports.sendMessage = asyncHandler(async (req, res) => {
     try {
         const { chatRoomId, senderId, text, attachments } = req.body;
 
+        // ── Validation ──────────────────────────────────────────────
+        if (!chatRoomId || !senderId) {
+            return res.status(400).json(formatResponse(false, 'chatRoomId and senderId are required'));
+        }
+
+        // Parse attachments if they are sent as JSON string in form-data
+        let processedAttachments = [];
+        if (attachments) {
+            if (typeof attachments === 'string') {
+                try {
+                    processedAttachments = JSON.parse(attachments);
+                } catch (e) {
+                    console.error("Error parsing attachments string:", e);
+                }
+            } else if (Array.isArray(attachments)) {
+                processedAttachments = attachments;
+            }
+        }
+
+        // Process newly uploaded files through multer
+        if (req.files && req.files.length > 0) {
+            const uploadedFiles = req.files.map(file => ({
+                url: `/uploads/chat/${file.filename}`,
+                type: getFileType(file.filename),
+                name: file.originalname
+            }));
+            processedAttachments = [...processedAttachments, ...uploadedFiles];
+        }
+
+        if (!text && processedAttachments.length === 0) {
+            return res.status(400).json(formatResponse(false, 'Message text or attachment is required'));
+        }
+
+        // ── Save message to DB ──────────────────────────────────────
         const message = await Message.create({
             chatRoom: chatRoomId,
             sender: senderId,
             text,
-            attachments
+            attachments: processedAttachments
         });
 
-        await ChatRoom.findByIdAndUpdate(chatRoomId, {
-            lastMessage: message._id,
-            updatedAt: Date.now()
-        });
+        // ── Update room's lastMessage ───────────────────────────────
+        const room = await ChatRoom.findByIdAndUpdate(
+            chatRoomId,
+            { lastMessage: message._id, updatedAt: Date.now() },
+            { new: true }
+        ).select('participants');
 
+        // ── Populate sender info ────────────────────────────────────
         const populatedMessage = await message.populate('sender', 'firstName lastName fullName image');
 
-        // Logic to emit via Socket.io
+        // ── Socket Event 1: Chat room mein live message bhejo ───────
+        // Dono log same chat screen pe hoon toh turant message dikhega
         emitMessage(chatRoomId, populatedMessage);
+
+        // ── Socket Event 2: Har participant ke private room mein ────
+        // notification bhejo (unread badge + chat list update ke liye)
+        try {
+            const io = getIO();
+            if (room?.participants) {
+                room.participants.forEach((participantId) => {
+                    // Sender ko notification mat bhejo
+                    if (participantId.toString() !== senderId.toString()) {
+                        io.to(participantId.toString()).emit('new-message-notification', {
+                            chatRoomId,
+                            message: {
+                                _id: populatedMessage._id,
+                                text: populatedMessage.text,
+                                sender: populatedMessage.sender,
+                                createdAt: populatedMessage.createdAt,
+                                attachments: populatedMessage.attachments
+                            }
+                        });
+                    }
+                });
+            }
+        } catch (socketErr) {
+            console.warn('Socket emit failed (new-message-notification):', socketErr.message);
+        }
+        // ───────────────────────────────────────────────────────────
 
         res.status(201).json(formatResponse(true, 'Message sent', populatedMessage));
     } catch (error) {

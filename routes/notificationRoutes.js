@@ -24,4 +24,10 @@ router.delete('/deleteBanner/:id', notificationController.deleteBanner);
 // @desc    Upload banner image using Multer
 router.post('/uploadBannerImage', upload.single('image'), notificationController.uploadBannerImage);
 
+// @desc    Get employee's personal notifications
+router.get('/getMyNotifications', notificationController.getMyNotifications);
+
+// @desc    Mark individual notification as read
+router.put('/markAsRead/:id', notificationController.markAsRead);
+
 module.exports = router;

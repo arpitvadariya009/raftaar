@@ -1,5 +1,6 @@
 const Attendance = require("../models/Attendance");
 const AuthEmployee = require("../models/AuthEmployee.model");
+const LocationLog = require("../models/LocationLog");
 const asyncHandler = require('express-async-handler');
 const { formatResponse } = require('../utils/helpers');
 const mongoose = require('mongoose');
@@ -17,7 +18,6 @@ exports.markAttendance = async (req, res, next) => {
             return res.status(400).json({ success: false, message: "Employee ID is required" });
         }
 
-        // Validate employee exists
         const employee = await AuthEmployee.findById(employeeId);
         if (!employee) {
             return res.status(404).json({ success: false, message: "Employee not found" });
@@ -26,54 +26,127 @@ exports.markAttendance = async (req, res, next) => {
         const now = new Date();
         const startOfDay = new Date(now.getFullYear(), now.getMonth(), now.getDate());
 
-        // Check if attendance already exists for today
-        let attendance = await Attendance.findOne({
-            employee: employeeId,
-            date: startOfDay
-        });
+        let attendance = await Attendance.findOne({ employee: employeeId, date: startOfDay });
 
         if (!attendance) {
-            // No entry yet, mark In
+            // ── First IN of the day ──────────────────────────────────────
             attendance = await Attendance.create({
                 employee: employeeId,
                 company: employee.company,
                 date: startOfDay,
                 inTime: now,
+                sessions: [{ in: now }],
                 status: "Present"
+            });
+
+            // ✅ Auto timeline log — checked in
+            await LocationLog.create({
+                employee: employeeId,
+                company: employee.company,
+                latitude: 0, longitude: 0,
+                address: 'Checked In',
+                status: 'checked in'
             });
 
             return res.status(201).json({
                 success: true,
-                message: "IN time marked successfully",
+                message: "IN marked ✅",
+                action: "IN",
+                time: now,
                 data: attendance
             });
         }
 
-        // If inTime exists but outTime does not, mark Out
-        if (attendance.inTime && !attendance.outTime) {
-            const diffInMs = now.getTime() - attendance.inTime.getTime();
-            const hours = diffInMs / (1000 * 60 * 60);
+        // ── Find the last session ────────────────────────────────────────
+        // sessions na ho purane records ke liye → inTime/outTime fallback
+        if (!attendance.sessions || attendance.sessions.length === 0) {
+            if (attendance.inTime && !attendance.outTime) {
+                // Old record — OUT mark karo
+                attendance.outTime = now;
+                const diffMs = now - attendance.inTime;
+                attendance.workingHours = parseFloat((diffMs / (1000 * 60 * 60)).toFixed(2));
+                attendance.sessions = [
+                    { in: attendance.inTime, out: now }
+                ];
+                await attendance.save();
+
+                await LocationLog.create({
+                    employee: employeeId, company: employee.company,
+                    latitude: 0, longitude: 0,
+                    address: 'Checked Out', status: 'checked out'
+                });
+
+                return res.status(200).json({
+                    success: true,
+                    message: "OUT marked ✅",
+                    action: "OUT",
+                    time: now,
+                    data: attendance
+                });
+            }
+        }
+
+        const lastSession = attendance.sessions[attendance.sessions.length - 1];
+
+        if (lastSession && lastSession.in && !lastSession.out) {
+            // ── Currently IN → Mark OUT ─────────────────────────────────
+            lastSession.out = now;
+
+            let totalMs = 0;
+            attendance.sessions.forEach(s => {
+                if (s.in && s.out) totalMs += new Date(s.out) - new Date(s.in);
+            });
+            const totalHours = totalMs / (1000 * 60 * 60);
 
             attendance.outTime = now;
-            attendance.workingHours = parseFloat(hours.toFixed(2));
+            attendance.workingHours = parseFloat(totalHours.toFixed(2));
             await attendance.save();
+
+            // ✅ Auto timeline log — checked out
+            await LocationLog.create({
+                employee: employeeId, company: employee.company,
+                latitude: 0, longitude: 0,
+                address: 'Checked Out',
+                status: 'checked out'
+            });
 
             return res.status(200).json({
                 success: true,
-                message: "OUT time marked successfully",
+                message: "OUT marked ✅",
+                action: "OUT",
+                time: now,
+                totalWorkingHours: `${Math.floor(totalHours)}h ${Math.round((totalHours % 1) * 60)}m`,
+                data: attendance
+            });
+
+        } else {
+            // ── Currently OUT → Mark IN again (back from break) ──────────
+            attendance.sessions.push({ in: now });
+            await attendance.save();
+
+            // ✅ Auto timeline log — checked in again
+            await LocationLog.create({
+                employee: employeeId, company: employee.company,
+                latitude: 0, longitude: 0,
+                address: 'Back from Break',
+                status: 'checked in'
+            });
+
+            return res.status(200).json({
+                success: true,
+                message: "IN marked again ✅ (Back from break)",
+                action: "IN",
+                time: now,
+                sessionNumber: attendance.sessions.length,
                 data: attendance
             });
         }
-
-        return res.status(400).json({
-            success: false,
-            message: "Attendance for both IN and OUT has already been marked for today"
-        });
 
     } catch (error) {
         next(error);
     }
 };
+
 
 /**
  * @desc    Get Daily Attendance Log for a month

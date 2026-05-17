@@ -1,5 +1,7 @@
 const asyncHandler = require('express-async-handler');
+const mongoose = require('mongoose');
 const Task = require('../models/Task');
+const Notification = require('../models/Notification');
 const { formatResponse } = require('../utils/helpers');
 
 // @desc    Create a new task
@@ -18,9 +20,22 @@ exports.createTask = asyncHandler(async (req, res) => {
             assignee,
             location,
             company: companyId,
-            createdBy: req.user?._id, // Assuming user is in req.user from auth middleware
+            createdBy: req.user?._id,
             parentTask
         });
+
+        // 🔔 Notification: New Task Assigned
+        if (assignee) {
+            await Notification.create({
+                recipient: assignee,
+                company: companyId,
+                title: 'New Task Assigned 📋',
+                message: `You have been assigned a new task: "${title}"`,
+                type: 'New Task Assigned',
+                relatedId: task._id,
+                onModel: 'Task'
+            });
+        }
 
         res.status(201).json(formatResponse(true, 'Task created successfully', task));
     } catch (error) {
@@ -33,13 +48,13 @@ exports.createTask = asyncHandler(async (req, res) => {
 // @access  Private
 exports.getTasks = asyncHandler(async (req, res) => {
     try {
-        const { date, employeeId, companyId, status } = req.query;
-        
+        const { date, employeeId, companyId, status, page = 1, limit = 10 } = req.query;
+
         const query = {};
         if (employeeId) query.assignee = employeeId;
         if (companyId) query.company = companyId;
         if (status) query.status = status;
-        
+
         if (date) {
             const startOfDay = new Date(date);
             startOfDay.setHours(0, 0, 0, 0);
@@ -48,11 +63,28 @@ exports.getTasks = asyncHandler(async (req, res) => {
             query.date = { $gte: startOfDay, $lte: endOfDay };
         }
 
+        const pageNum  = parseInt(page);
+        const limitNum = parseInt(limit);
+        const skip     = (pageNum - 1) * limitNum;
+
+        const totalCount = await Task.countDocuments(query);
+        const totalPages = Math.ceil(totalCount / limitNum);
+
         const tasks = await Task.find(query)
             .populate('assignee', 'firstName lastName fullName image department')
-            .sort({ time: 1 });
+            .sort({ time: 1 })
+            .skip(skip)
+            .limit(limitNum);
 
-        res.json(formatResponse(true, 'Tasks retrieved successfully', tasks));
+        res.json(formatResponse(true, 'Tasks retrieved successfully', {
+            tasks,
+            pagination: {
+                currentPage: pageNum,
+                totalPages,
+                totalCount,
+                limit: limitNum,
+            }
+        }));
     } catch (error) {
         res.status(500).json(formatResponse(false, error.message));
     }
@@ -86,9 +118,36 @@ exports.updateTaskStatus = asyncHandler(async (req, res) => {
 // @access  Private
 exports.getTaskStats = asyncHandler(async (req, res) => {
     try {
-        const { companyId, employeeId } = req.query;
-        const query = { company: companyId };
-        if (employeeId) query.assignee = employeeId;
+        const { companyId, employeeId, date, startDate, endDate } = req.query;
+
+        const query = {};
+
+        if (companyId) query.company = new mongoose.Types.ObjectId(companyId);
+        if (employeeId) query.assignee = new mongoose.Types.ObjectId(employeeId);
+
+        // Single date filter
+        if (date) {
+            const start = new Date(date);
+            start.setHours(0, 0, 0, 0);
+            const end = new Date(date);
+            end.setHours(23, 59, 59, 999);
+            query.date = { $gte: start, $lte: end };
+        }
+
+        // Date range filter (startDate to endDate)
+        if (!date && (startDate || endDate)) {
+            query.date = {};
+            if (startDate) {
+                const start = new Date(startDate);
+                start.setHours(0, 0, 0, 0);
+                query.date.$gte = start;
+            }
+            if (endDate) {
+                const end = new Date(endDate);
+                end.setHours(23, 59, 59, 999);
+                query.date.$lte = end;
+            }
+        }
 
         const stats = await Task.aggregate([
             { $match: query },

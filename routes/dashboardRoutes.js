@@ -17,6 +17,6 @@ router.get('/recent-companies', dashboardController.getRecentCompanies);
 router.get('/recent-enquiries', dashboardController.getRecentEnquiries);
 
 // @desc    Employee specific dashboard
-router.get('/employee', employeeDashboardController.getEmployeeDashboard);
+router.get('/getEmployeeDashboard', employeeDashboardController.getEmployeeDashboard);
 
 module.exports = router;

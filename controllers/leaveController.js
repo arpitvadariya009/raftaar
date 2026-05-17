@@ -1,5 +1,6 @@
 const LeaveRequest = require("../models/LeaveRequest");
 const AuthEmployee = require("../models/AuthEmployee.model");
+const Notification = require("../models/Notification");
 const mongoose = require("mongoose");
 
 /**
@@ -75,6 +76,10 @@ exports.getAllLeaves = async (req, res, next) => {
         ];
 
         // Filters
+        if (req.query.employeeId) {
+            pipeline.push({ $match: { "employee._id": new mongoose.Types.ObjectId(req.query.employeeId) } });
+        }
+
         if (status !== undefined && status !== "") {
             pipeline.push({ $match: { status: Number(status) } });
         }
@@ -184,11 +189,22 @@ exports.updateLeaveStatus = async (req, res, next) => {
             leaveId,
             { status },
             { new: true }
-        ).populate("employee", "dateOfJoining department fullName lastName firstName image _id");
+        ).populate("employee", "dateOfJoining department fullName lastName firstName image _id company");
 
         if (!updatedLeave) {
             return res.status(404).json({ success: false, message: "Leave request not found" });
         }
+
+        // 🔔 Notification: Leave Approved / Rejected
+        await Notification.create({
+            recipient: updatedLeave.employee._id,
+            company: updatedLeave.company,
+            title: status == 1 ? 'Leave Approved ✅' : 'Leave Rejected ❌',
+            message: `Your leave request (${updatedLeave.leaveType}) has been ${status == 1 ? 'approved' : 'rejected'}.`,
+            type: status == 1 ? 'Leave Approved' : 'Leave Rejected',
+            relatedId: updatedLeave._id,
+            onModel: 'LeaveRequest'
+        });
 
         res.status(200).json({
             success: true,

@@ -95,6 +95,36 @@ exports.deleteBanner = asyncHandler(async (req, res) => {
     }
 });
 
+const Notification = require('../models/Notification');
+
+// @desc    Get current employee's notifications
+// @route   GET /api/notifications/my
+// @access  Private
+exports.getMyNotifications = asyncHandler(async (req, res) => {
+    try {
+        const { employeeId, companyId } = req.query;
+        const notifications = await Notification.find({ recipient: employeeId, company: companyId })
+            .sort({ createdAt: -1 })
+            .limit(50);
+            
+        res.json(formatResponse(true, 'Notifications retrieved successfully', notifications));
+    } catch (error) {
+        res.status(500).json(formatResponse(false, error.message));
+    }
+});
+
+// @desc    Mark notification as read
+// @route   PUT /api/notifications/read/:id
+// @access  Private
+exports.markAsRead = asyncHandler(async (req, res) => {
+    try {
+        const notification = await Notification.findByIdAndUpdate(req.params.id, { isRead: true }, { new: true });
+        res.json(formatResponse(true, 'Notification marked as read', notification));
+    } catch (error) {
+        res.status(500).json(formatResponse(false, error.message));
+    }
+});
+
 // @desc    Upload banner image
 // @route   POST /api/notifications/uploadBannerImage
 // @access  Private/Admin

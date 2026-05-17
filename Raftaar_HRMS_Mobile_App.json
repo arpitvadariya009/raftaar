@@ -1,0 +1,357 @@
+{
+	"info": {
+		"_postman_id": "raftaar-hrms-mobile-app",
+		"name": "Raftaar HRMS Mobile App",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"item": [
+		{
+			"name": "Auth",
+			"item": [
+				{
+					"name": "Employee Login",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"employeeId\": \"{{employee_obj_id}}\",\n    \"password\": \"yourpassword\"\n}",
+							"options": { "raw": { "language": "json" } }
+						},
+						"url": {
+							"raw": "{{base_url}}/api/auth-employee/employeeLogin",
+							"host": [ "{{base_url}}" ],
+							"path": [ "api", "auth-employee", "employeeLogin" ]
+						}
+					}
+				},
+				{
+					"name": "Forgot Password",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"email\": \"email@company.com\"\n}",
+							"options": { "raw": { "language": "json" } }
+						},
+						"url": {
+							"raw": "{{base_url}}/api/auth-employee/forgotPassword",
+							"host": [ "{{base_url}}" ],
+							"path": [ "api", "auth-employee", "forgotPassword" ]
+						}
+					}
+				}
+			]
+		},
+		{
+			"name": "Dashboard",
+			"item": [
+				{
+					"name": "Get Employee Dashboard",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/dashboard/getEmployeeDashboard?employeeId={{employee_id}}&companyId={{company_id}}",
+							"host": [ "{{base_url}}" ],
+							"path": [ "api", "dashboard", "getEmployeeDashboard" ],
+							"query": [
+								{ "key": "employeeId", "value": "{{employee_id}}" },
+								{ "key": "companyId", "value": "{{company_id}}" }
+							]
+						}
+					}
+				}
+			]
+		},
+		{
+			"name": "Tasks",
+			"item": [
+				{
+					"name": "Create Task",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"title\": \"Code Review\",\n    \"description\": \"Review module\",\n    \"date\": \"2026-04-22\",\n    \"time\": \"11:00\",\n    \"priority\": \"High\",\n    \"assignee\": \"{{employee_id}}\",\n    \"location\": \"Head Office\",\n    \"companyId\": \"{{company_id}}\"\n}",
+							"options": { "raw": { "language": "json" } }
+						},
+						"url": {
+							"raw": "{{base_url}}/api/tasks/createTask",
+							"host": [ "{{base_url}}" ],
+							"path": [ "api", "tasks", "createTask" ]
+						}
+					}
+				},
+				{
+					"name": "Get My Tasks",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/tasks/getTasks?employeeId={{employee_id}}&companyId={{company_id}}&date=2026-04-22",
+							"host": [ "{{base_url}}" ],
+							"path": [ "api", "tasks", "getTasks" ],
+							"query": [
+								{ "key": "employeeId", "value": "{{employee_id}}" },
+								{ "key": "companyId", "value": "{{company_id}}" },
+								{ "key": "date", "value": "2026-04-22" }
+							]
+						}
+					}
+				},
+				{
+					"name": "Update Task Status",
+					"request": {
+						"method": "PUT",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"status\": \"Completed\"\n}",
+							"options": { "raw": { "language": "json" } }
+						},
+						"url": {
+							"raw": "{{base_url}}/api/tasks/updateTaskStatus/:id",
+							"host": [ "{{base_url}}" ],
+							"path": [ "api", "tasks", "updateTaskStatus", ":id" ],
+							"variable": [ { "key": "id", "value": "task_id" } ]
+						}
+					}
+				},
+				{
+					"name": "Get Task Stats",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/tasks/getTaskStats?companyId={{company_id}}&employeeId={{employee_id}}",
+							"host": [ "{{base_url}}" ],
+							"path": [ "api", "tasks", "getTaskStats" ],
+							"query": [
+								{ "key": "companyId", "value": "{{company_id}}" },
+								{ "key": "employeeId", "value": "{{employee_id}}" }
+							]
+						}
+					}
+				}
+			]
+		},
+		{
+			"name": "Location",
+			"item": [
+				{
+					"name": "Log Location",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"employeeId\": \"{{employee_id}}\",\n    \"companyId\": \"{{company_id}}\",\n    \"latitude\": 28.6139,\n    \"longitude\": 77.2090,\n    \"address\": \"Main Gate\",\n    \"status\": \"active\",\n    \"batteryLevel\": 85\n}",
+							"options": { "raw": { "language": "json" } }
+						},
+						"url": {
+							"raw": "{{base_url}}/api/location/logLocation",
+							"host": [ "{{base_url}}" ],
+							"path": [ "api", "location", "logLocation" ]
+						}
+					}
+				},
+				{
+					"name": "Get Timeline",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/location/getTimeline?employeeId={{employee_id}}&date=2026-04-22",
+							"host": [ "{{base_url}}" ],
+							"path": [ "api", "location", "getTimeline" ],
+							"query": [
+								{ "key": "employeeId", "value": "{{employee_id}}" },
+								{ "key": "date", "value": "2026-04-22" }
+							]
+						}
+					}
+				}
+			]
+		},
+		{
+			"name": "Attendance",
+			"item": [
+				{
+					"name": "Mark Attendance",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"employeeId\": \"{{employee_id}}\"\n}",
+							"options": { "raw": { "language": "json" } }
+						},
+						"url": {
+							"raw": "{{base_url}}/api/attendance/markAttendance",
+							"host": [ "{{base_url}}" ],
+							"path": [ "api", "attendance", "markAttendance" ]
+						}
+					}
+				},
+				{
+					"name": "Get Attendance Log",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/attendance/getAttendanceLog/{{employee_id}}?month=4&year=2026",
+							"host": [ "{{base_url}}" ],
+							"path": [ "api", "attendance", "getAttendanceLog", "{{employee_id}}" ],
+							"query": [
+								{ "key": "month", "value": "4" },
+								{ "key": "year", "value": "2026" }
+							]
+						}
+					}
+				}
+			]
+		},
+		{
+			"name": "Notifications",
+			"item": [
+				{
+					"name": "Get My Notifications",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/notifications/getMyNotifications?employeeId={{employee_id}}&companyId={{company_id}}",
+							"host": [ "{{base_url}}" ],
+							"path": [ "api", "notifications", "getMyNotifications" ],
+							"query": [
+								{ "key": "employeeId", "value": "{{employee_id}}" },
+								{ "key": "companyId", "value": "{{company_id}}" }
+							]
+						}
+					}
+				},
+				{
+					"name": "Mark Notification Read",
+					"request": {
+						"method": "PUT",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/notifications/markAsRead/:id",
+							"host": [ "{{base_url}}" ],
+							"path": [ "api", "notifications", "markAsRead", ":id" ],
+							"variable": [ { "key": "id", "value": "notif_id" } ]
+						}
+					}
+				}
+			]
+		},
+		{
+			"name": "Messaging",
+			"item": [
+				{
+					"name": "Get My Chat Rooms",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/chat/getMyChatRooms?employeeId={{employee_id}}&companyId={{company_id}}",
+							"host": [ "{{base_url}}" ],
+							"path": [ "api", "chat", "getMyChatRooms" ],
+							"query": [
+								{ "key": "employeeId", "value": "{{employee_id}}" },
+								{ "key": "companyId", "value": "{{company_id}}" }
+							]
+						}
+					}
+				},
+				{
+					"name": "Send Message",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"chatRoomId\": \"room_id\",\n    \"senderId\": \"{{employee_id}}\",\n    \"text\": \"Hello team!\",\n    \"attachments\": []\n}",
+							"options": { "raw": { "language": "json" } }
+						},
+						"url": {
+							"raw": "{{base_url}}/api/chat/sendMessage",
+							"host": [ "{{base_url}}" ],
+							"path": [ "api", "chat", "sendMessage" ]
+						}
+					}
+				},
+				{
+					"name": "Get Message History",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/chat/getMessages/:roomId",
+							"host": [ "{{base_url}}" ],
+							"path": [ "api", "chat", "getMessages", ":roomId" ],
+							"variable": [ { "key": "roomId", "value": "room_id" } ]
+						}
+					}
+				}
+			]
+		},
+		{
+			"name": "Leaves",
+			"item": [
+				{
+					"name": "Apply Leave",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"employeeId\": \"{{employee_id}}\",\n    \"companyId\": \"{{company_id}}\",\n    \"leaveType\": \"Casual Leave\",\n    \"fromDate\": \"2026-04-25\",\n    \"toDate\": \"2026-04-26\",\n    \"reason\": \"Family function\"\n}",
+							"options": { "raw": { "language": "json" } }
+						},
+						"url": {
+							"raw": "{{base_url}}/api/leaves/applyLeave",
+							"host": [ "{{base_url}}" ],
+							"path": [ "api", "leaves", "applyLeave" ]
+						}
+					}
+				},
+				{
+					"name": "Get My Leaves",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/leaves/getAllLeaves/{{company_id}}?employeeId={{employee_id}}",
+							"host": [ "{{base_url}}" ],
+							"path": [ "api", "leaves", "getAllLeaves", "{{company_id}}" ],
+							"query": [
+								{ "key": "employeeId", "value": "{{employee_id}}" }
+							]
+						}
+					}
+				}
+			]
+		}
+	],
+	"variable": [
+		{
+			"key": "base_url",
+			"value": "http://localhost:5000",
+			"type": "string"
+		},
+		{
+			"key": "employee_id",
+			"value": "employee_mongodb_id",
+			"type": "string"
+		},
+		{
+			"key": "company_id",
+			"value": "company_mongodb_id",
+			"type": "string"
+		}
+	]
+}

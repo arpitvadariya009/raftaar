@@ -6,15 +6,15 @@ const { protect } = require("../middleware/authMiddleware");
 router.use(protect);
 
 // @desc    Apply for leave
-router.post('/apply', leaveController.applyLeave);
+router.post('/applyLeave', leaveController.applyLeave);
 
 // @desc    Get all leave requests for a company
-router.get('/company/:companyId', leaveController.getAllLeaves);
+router.get('/getAllLeaves/:companyId', leaveController.getAllLeaves);
 
 // @desc    Get leave stats for dashboard
-router.get('/stats/:companyId', leaveController.getLeaveStats);
+router.get('/getLeaveStats/:companyId', leaveController.getLeaveStats);
 
 // @desc    Update leave status (Approve/Reject)
-router.put('/status/:leaveId', leaveController.updateLeaveStatus);
+router.put('/updateLeaveStatus/:leaveId', leaveController.updateLeaveStatus);
 
 module.exports = router;

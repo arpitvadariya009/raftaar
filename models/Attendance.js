@@ -16,13 +16,20 @@ const attendanceSchema = new mongoose.Schema(
             type: Date,
             required: true
         },
-        inTime: {
+        inTime: {   // First IN of the day
             type: Date
         },
-        outTime: {
+        outTime: {  // Last OUT of the day
             type: Date
         },
-        workingHours: {
+        // 🆕 Multiple sessions (IN/OUT pairs) for break support
+        sessions: [
+            {
+                in:  { type: Date },
+                out: { type: Date }
+            }
+        ],
+        workingHours: {  // Total hours (sum of all sessions)
             type: Number,
             default: null
         },
