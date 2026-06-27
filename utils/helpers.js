@@ -1,28 +1,28 @@
-const Company = require('../models/Company');
+const mongoose = require('mongoose');
 
-// Generate unique company code: AB-001, TT-002, etc.
 exports.generateCompanyCode = async (companyName) => {
-    // Extract first 2 letters from company name
-    const prefix = companyName
+    // Extract first 5 letters from company name (letters only)
+    const baseCode = companyName
         .replace(/[^a-zA-Z]/g, '')
-        .substring(0, 2)
-        .toUpperCase() || 'CP';
+        .substring(0, 5)
+        .toUpperCase() || 'COMP';
 
-    // Find the latest company with this prefix
-    const lastCompany = await Company.findOne({
-        companyCode: new RegExp(`^${prefix}-`)
-    }).sort({ companyCode: -1 });
+    const Company = mongoose.model('Company');
+    let isUnique = false;
+    let finalCode = baseCode;
+    let counter = 1;
 
-    let number = 1;
-    if (lastCompany) {
-        const lastCode = lastCompany.companyCode;
-        const lastNumber = parseInt(lastCode.split('-')[1]);
-        if (!isNaN(lastNumber)) {
-            number = lastNumber + 1;
+    while (!isUnique) {
+        const existing = await Company.findOne({ companyCode: finalCode });
+        if (!existing) {
+            isUnique = true;
+        } else {
+            counter++;
+            finalCode = `${baseCode}${counter}`;
         }
     }
 
-    return `${prefix}-${String(number).padStart(3, '0')}`;
+    return finalCode;
 };
 
 // Calculate valid-till date: startDate + durationMonths

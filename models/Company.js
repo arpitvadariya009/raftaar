@@ -65,6 +65,12 @@ const companySchema = new mongoose.Schema({
     token: {
         type: String,
     },
+    companyCode: {
+        type: String,
+        unique: true,
+        sparse: true,
+        trim: true
+    },
 }, {
     timestamps: true,
     toJSON: { virtuals: true },

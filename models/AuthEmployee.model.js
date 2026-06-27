@@ -246,17 +246,63 @@ const authEmployeeSchema = new mongoose.Schema(
         token: {
             type: String,
         },
+        employeeCode: {
+            type: String,
+            trim: true,
+        },
     },
     {
         timestamps: true,
     }
 );
 
-// Auto fullName + Password Hashing
+// Auto fullName + Password Hashing + employeeCode Generation
 authEmployeeSchema.pre("save", async function () {
     // Auto fullName
     if (this.firstName && this.lastName) {
         this.fullName = `${this.firstName} ${this.lastName}`;
+    }
+
+    // Generate unique employeeCode within company if new
+    if (this.isNew && !this.employeeCode) {
+        const Company = mongoose.model("Company");
+        const companyDoc = await Company.findById(this.company);
+        const companyCode = companyDoc ? companyDoc.companyCode : "EMP";
+
+        const cleanFirstName = this.firstName
+            .replace(/[^a-zA-Z]/g, '')
+            .toUpperCase() || 'EMP';
+
+        // Find employees in the same company whose employeeCode matches name plus optional numbers
+        const regex = new RegExp(`^${cleanFirstName}(\\d+)?$`);
+        const siblings = await this.constructor.find({ 
+            company: this.company,
+            employeeCode: regex
+        });
+
+        let maxNumber = 0;
+        let exactMatchFound = false;
+
+        siblings.forEach(sib => {
+            if (sib.employeeCode) {
+                const match = sib.employeeCode.match(new RegExp(`^${cleanFirstName}(\\d+)?$`));
+                if (match) {
+                    if (match[1]) {
+                        const num = parseInt(match[1]);
+                        if (num > maxNumber) maxNumber = num;
+                    } else {
+                        exactMatchFound = true;
+                    }
+                }
+            }
+        });
+
+        if (!exactMatchFound && siblings.length === 0) {
+            this.employeeCode = cleanFirstName;
+        } else {
+            const nextNum = maxNumber > 0 ? maxNumber + 1 : 2;
+            this.employeeCode = `${cleanFirstName}${nextNum}`;
+        }
     }
 
     // Bcrypt password hash (only if password is new or changed)
@@ -267,6 +313,9 @@ authEmployeeSchema.pre("save", async function () {
         this.password = await bcrypt.hash(this.password, salt);
     }
 });
+
+// Compound unique index for employeeCode per company
+authEmployeeSchema.index({ company: 1, employeeCode: 1 }, { unique: true, sparse: true });
 
 // Note: email index is already created via unique:true in schema definition
 

@@ -143,14 +143,34 @@ exports.registerCompany = asyncHandler(async (req, res) => {
 // @access  Public
 exports.loginCompany = asyncHandler(async (req, res) => {
     try {
-        const { _id, password } = req.body;
+        const { _id, companyCode, password } = req.body;
 
-        if (!_id || !password) {
-            res.status(400);
-            throw new Error('Please provide both company _id and password');
+        let searchId = _id;
+        let searchCode = companyCode;
+
+        const mongoose = require('mongoose');
+        if (searchId && !mongoose.Types.ObjectId.isValid(searchId)) {
+            searchCode = searchId;
+            searchId = null;
         }
 
-        const company = await Company.findById(_id).select('+password');
+        if (!searchId && !searchCode) {
+            res.status(400);
+            throw new Error('Please provide company identifier (ID or Company Code) and password');
+        }
+
+        if (!password) {
+            res.status(400);
+            throw new Error('Please provide password');
+        }
+
+        let company;
+        if (searchId) {
+            company = await Company.findById(searchId).select('+password');
+        }
+        if (!company && searchCode) {
+            company = await Company.findOne({ companyCode: searchCode.toUpperCase() }).select('+password');
+        }
 
         if (company && (await company.matchPassword(password))) {
             // Use existing token or generate one if missing (for legacy records)

@@ -122,11 +122,24 @@ exports.createEmployee = async (req, res) => {
         await newEmployee.save();
 
         // Send credentials via email (asynchronous background task)
+        const Company = require('../models/Company');
+        const companyDoc = await Company.findById(company);
+        const companyCode = companyDoc ? companyDoc.companyCode : '';
+        const loginId = companyCode ? `${companyCode}-${newEmployee.employeeCode}` : newEmployee._id.toString();
+
         mailService.sendEmail(
             email, 
             'Welcome to the Team! - Your Login Credentials', 
             'employee-welcome', 
-            { fullName: `${newEmployee.firstName} ${newEmployee.lastName}`, employeeId: newEmployee._id, password: autoPassword, loginUrl: process.env.FRONTEND_URL || '#' }
+            { 
+                fullName: `${newEmployee.firstName} ${newEmployee.lastName}`, 
+                employeeId: newEmployee._id, 
+                companyCode,
+                employeeCode: newEmployee.employeeCode,
+                loginId,
+                password: autoPassword, 
+                loginUrl: process.env.FRONTEND_URL || '#' 
+            }
         );
 
         res.status(201).json(formatResponse(true, 'Employee created successfully', newEmployee));
@@ -430,11 +443,23 @@ exports.updateEmployee = async (req, res) => {
 
         // If password was updated, send new credentials via email
         if (updateData.password) {
+            const Company = require('../models/Company');
+            const companyDoc = await Company.findById(employee.company);
+            const companyCode = companyDoc ? companyDoc.companyCode : '';
+            const loginId = companyCode && employee.employeeCode ? `${companyCode}-${employee.employeeCode}` : employee._id.toString();
+
             mailService.sendEmail(
                 employee.email, 
                 'Security Alert: Password Updated Successfully', 
                 'employee-password-reset', 
-                { fullName: `${employee.firstName} ${employee.lastName}`, employeeId: employee._id, password: updateData.password }
+                { 
+                    fullName: `${employee.firstName} ${employee.lastName}`, 
+                    employeeId: employee._id, 
+                    companyCode,
+                    employeeCode: employee.employeeCode,
+                    loginId,
+                    password: updateData.password 
+                }
             );
         }
 
@@ -471,14 +496,49 @@ exports.getEmployeeById = async (req, res) => {
  */
 exports.employeeLogin = async (req, res) => {
     try {
-        const { employeeId, password } = req.body;
+        const { employeeId, companyCode: bodyCompanyCode, employeeCode: bodyEmployeeCode, password } = req.body;
         const bcrypt = require('bcryptjs');
+        const mongoose = require('mongoose');
 
-        if (!employeeId || !password) {
-            return res.status(400).json(formatResponse(false, 'Employee ID and password are required'));
+        if ((!employeeId && (!bodyCompanyCode || !bodyEmployeeCode)) || !password) {
+            return res.status(400).json(formatResponse(false, 'Employee ID/Code and password are required'));
         }
 
-        const employee = await AuthEmployee.findById(employeeId);
+        let employee = null;
+
+        // 1. Try to find by direct ObjectId if valid
+        if (employeeId && mongoose.Types.ObjectId.isValid(employeeId)) {
+            employee = await AuthEmployee.findById(employeeId);
+        }
+
+        // 2. Try to find by companyCode + employeeCode (either combined or separate)
+        if (!employee) {
+            let companyCode = bodyCompanyCode;
+            let employeeCode = bodyEmployeeCode;
+
+            if (employeeId && employeeId.includes('-')) {
+                const parts = employeeId.split('-');
+                companyCode = parts[0].trim();
+                employeeCode = parts.slice(1).join('-').trim();
+            }
+
+            if (companyCode && employeeCode) {
+                const Company = mongoose.model('Company');
+                const company = await Company.findOne({ companyCode: companyCode.toUpperCase() });
+                if (company) {
+                    employee = await AuthEmployee.findOne({
+                        company: company._id,
+                        employeeCode: employeeCode.toUpperCase()
+                    });
+                }
+            }
+        }
+
+        // 3. Try to find by email
+        if (!employee && employeeId) {
+            employee = await AuthEmployee.findOne({ email: employeeId.toLowerCase() });
+        }
+
         if (!employee) {
             return res.status(401).json(formatResponse(false, 'Invalid credentials'));
         }
@@ -530,11 +590,23 @@ exports.forgotPassword = async (req, res) => {
         }
 
         // Send existing password (simple version) or reset link
+        const Company = require('../models/Company');
+        const companyDoc = await Company.findById(employee.company);
+        const companyCode = companyDoc ? companyDoc.companyCode : '';
+        const loginId = companyCode && employee.employeeCode ? `${companyCode}-${employee.employeeCode}` : employee._id.toString();
+
         await mailService.sendEmail(
             email,
             'Password Recovery - Raftaar HRMS',
             'employee-password-reset', // Reusing template
-            { fullName: employee.fullName, employeeId: employee._id, password: employee.originalPassword }
+            { 
+                fullName: employee.fullName, 
+                employeeId: employee._id, 
+                companyCode,
+                employeeCode: employee.employeeCode,
+                loginId,
+                password: employee.originalPassword 
+            }
         );
 
         res.json(formatResponse(true, 'Password sent to your email'));

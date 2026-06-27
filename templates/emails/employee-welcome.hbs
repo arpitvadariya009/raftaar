@@ -30,11 +30,13 @@
             <p>Your account has been created on <span class="highlight">Raftaar HRMS</span>. We're thrilled to have you with us!</p>
             
             <div class="credentials-box">
-                <p><span class="label">Employee ID:</span> <span class="value">{{employeeId}}</span></p>
+                <p><span class="label">Company Code:</span> <span class="value">{{companyCode}}</span></p>
+                <p><span class="label">Employee Code:</span> <span class="value">{{employeeCode}}</span></p>
+                <p><span class="label">Login ID (Use this to login):</span> <span class="value">{{loginId}}</span></p>
                 <p><span class="label">Auto-generated Password:</span> <span style="color: #2563eb; font-weight: bold; font-size: 16px;">{{password}}</span></p>
             </div>
 
-            <p>Please use these credentials to log into the employee portal. For your protection, please change your password upon your first login.</p>
+            <p>Please use your Login ID (e.g., {{loginId}}) or your email along with the password to log into the employee portal. For your protection, please change your password upon your first login.</p>
             
             <a href="{{loginUrl}}" class="btn">Get Started</a>
         </div>
