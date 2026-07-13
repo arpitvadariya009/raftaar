@@ -25,6 +25,19 @@ const initSocket = (server) => {
             console.log(`User joined chat room: ${roomId}`);
         });
 
+        // ─── HR Dashboard: Company Room ───────────────────────────────
+        // HR login karta hai aur apni company ka room join karta hai
+        // Taaki sirf us company ke employees ki location milegi
+        socket.on('join-company', (companyId) => {
+            socket.join(`company:${companyId}`);
+            console.log(`HR joined company room: company:${companyId}`);
+        });
+
+        socket.on('leave-company', (companyId) => {
+            socket.leave(`company:${companyId}`);
+        });
+        // ─────────────────────────────────────────────────────────────
+
         socket.on('disconnect', () => {
             console.log('User disconnected');
         });
@@ -54,4 +67,14 @@ const emitMessage = (roomId, message) => {
     }
 };
 
-module.exports = { initSocket, getIO, sendNotification, emitMessage };
+// ─── NEW: HR Dashboard ko live location update bhejo ─────────────────────────
+// Sirf us company ke HR dashboard ko emit hoga
+const emitToCompany = (companyId, event, data) => {
+    if (io) {
+        io.to(`company:${companyId.toString()}`).emit(event, data);
+    }
+};
+// ─────────────────────────────────────────────────────────────────────────────
+
+module.exports = { initSocket, getIO, sendNotification, emitMessage, emitToCompany };
+

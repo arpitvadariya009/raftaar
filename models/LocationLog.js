@@ -23,12 +23,22 @@ const locationLogSchema = new mongoose.Schema({
         type: String,
         trim: true
     },
+    placeName: {
+        type: String,
+        trim: true
+    },
     status: {
         type: String,
         enum: ['checked in', 'on site', 'checked out', 'tracking active', 'tracking paused'],
         default: 'on site'
     },
     batteryLevel: Number,
+    speed: Number,          // km/h
+    accuracy: Number,       // GPS accuracy in meters
+    sessionId: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'LocationSession'
+    },
     isMockLocation: {
         type: Boolean,
         default: false
