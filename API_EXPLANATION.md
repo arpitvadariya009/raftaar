@@ -76,10 +76,10 @@ Yeh document sabhi APIs ka matlab aur unka use case samjhata hai.
 - **POST `/api/enquiries/createEnquiry` (Public)**: 
   - **Kya karta hai?**: Bina login ke koi bhi company enquiry bhej sakti hai.
 
-- **PUT `/api/enquiries/respondToEnquiry/:id` (Protected)**: 
+- **PUT `/api/enquiries/respondToEnquiry/:id` ( ed)**: 
   - **Kya karta hai?**: Admin lead ka jawaab store karta hai.
 
-- **POST `/api/enquiries/convertToCustomer/:id` (Protected)**:
+- **POST `/api/enquiries/convertToCustomer/:id` ( ed)**:
   - **Kya karta hai?**: Lead ko successful customer/company me badal deta hai.
 
 ---

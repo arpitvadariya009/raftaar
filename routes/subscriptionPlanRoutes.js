@@ -1,10 +1,9 @@
 const express = require('express');
 const router = express.Router();
 const subscriptionPlanController = require('../controllers/subscriptionPlanController');
-const { protect } = require('../middleware/authMiddleware');
+// const { protect } = require('../middleware/authMiddleware'); // JWT disabled
 
-// Protect all routes
-router.use(protect);
+// Routes are open (JWT disabled)
 
 // @desc    Create a new subscription plan
 router.post('/createPlan', subscriptionPlanController.createPlan);

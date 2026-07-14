@@ -1,12 +1,11 @@
 const express = require('express');
 const router = express.Router();
 const visitorController = require('../controllers/visitorController');
-const { protect } = require('../middleware/authMiddleware');
+// const { protect } = require('../middleware/authMiddleware'); // JWT disabled
 const upload = require('../middleware/upload');
 
 
-// All visitor routes are protected
-router.use(protect);
+// Visitor routes are open (JWT disabled)
 
 // @desc    Register a new visitor
 router.post('/createVisitor', upload.single('image'), visitorController.createVisitor);

@@ -3,10 +3,9 @@ const router = express.Router();
 const subscriptionController = require('../controllers/subscriptionController');
 const validateRequest = require('../middlewares/validateRequest');
 const { subscriptionSchema } = require('../validations/hrmsValidation');
-const { protect } = require('../middleware/authMiddleware');
+// const { protect } = require('../middleware/authMiddleware'); // JWT disabled
 
-// Protect all subscription routes
-router.use(protect);
+// Subscription routes are open (JWT disabled)
 
 // @desc    Create a new subscription (auto-expires old active subscription for renewal)
 router.post('/createSubscription', validateRequest(subscriptionSchema), subscriptionController.createSubscription);

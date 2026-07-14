@@ -2,10 +2,9 @@ const express = require('express');
 const router = express.Router();
 const dashboardController = require('../controllers/dashboardController');
 const employeeDashboardController = require('../controllers/employeeDashboardController');
-const { protect } = require('../middleware/authMiddleware');
+// const { protect } = require('../middleware/authMiddleware'); // JWT disabled
 
-// All dashboard routes are protected
-router.use(protect);
+// All dashboard routes are open (JWT disabled)
 
 // @desc    Get all dashboard stats in one API call
 router.get('/stats', dashboardController.getDashboardStats);

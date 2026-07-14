@@ -1,9 +1,9 @@
 const express = require('express');
 const router = express.Router();
 const attendanceController = require('../controllers/attendanceController');
-const { protect } = require('../middleware/authMiddleware');
+// const { protect } = require('../middleware/authMiddleware'); // JWT disabled
 
-router.use(protect);
+// Attendance routes are open (JWT disabled)
 
 // @desc    Mark Attendance (In / Out)
 router.post('/markAttendance', attendanceController.markAttendance);

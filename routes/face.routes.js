@@ -33,5 +33,6 @@ const upload = multer({
 router.post('/register', upload.single('image'), faceController.registerFace);
 router.post('/verify', upload.single('image'), faceController.verifyFace);
 router.post('/login', upload.single('image'), faceController.faceLogin);
+router.post('/mark-attendance', upload.single('image'), faceController.markFaceAttendance);
 
 module.exports = router;

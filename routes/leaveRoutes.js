@@ -1,9 +1,9 @@
 const express = require("express");
 const router = express.Router();
 const leaveController = require("../controllers/leaveController");
-const { protect } = require("../middleware/authMiddleware");
+// const { protect } = require("../middleware/authMiddleware"); // JWT disabled
 
-router.use(protect);
+// Leave routes are open (JWT disabled)
 
 // @desc    Apply for leave
 router.post('/applyLeave', leaveController.applyLeave);

@@ -4,10 +4,9 @@ const notificationController = require('../controllers/notificationController');
 const upload = require('../middleware/upload');
 const validateRequest = require('../middlewares/validateRequest');
 const { bannerSchema } = require('../validations/hrmsValidation');
-const { protect } = require('../middleware/authMiddleware');
+// const { protect } = require('../middleware/authMiddleware'); // JWT disabled
 
-// Protect all notification routes
-router.use(protect);
+// Notification routes are open (JWT disabled)
 
 // @desc    Setup a new advertisement banner
 router.post('/createBanner', validateRequest(bannerSchema), notificationController.createBanner);

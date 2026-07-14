@@ -75,15 +75,15 @@ exports.createEmployee = async (req, res) => {
         let descriptorArray = undefined;
         let imagePath = undefined;
 
-        // Image/Face recognition ONLY for "Pro" plan (2)
-        if (requestedPlan === 2 && imageFile) {
+        // Process face descriptor for any employee when an image is provided
+        if (imageFile) {
             const descriptor = await faceService.getFaceDescriptor(imageFile.path);
             if (!descriptor) {
                 fs.unlinkSync(imageFile.path);
                 return res.status(400).json(formatResponse(false, 'No face detected or multiple faces found in the image'));
             }
 
-            // Face uniqueness check
+            // Face uniqueness check across all registered employees
             const allEmployees = await AuthEmployee.find({ descriptor: { $exists: true, $ne: [] } });
             const threshold = process.env.FACE_SIMILARITY_THRESHOLD || 0.6;
 
@@ -97,9 +97,6 @@ exports.createEmployee = async (req, res) => {
             }
             descriptorArray = Array.from(descriptor);
             imagePath = imageFile.filename;
-        } else if (imageFile) {
-            // Unlink image if not a Pro plan or not needed
-            fs.unlinkSync(imageFile.path);
         }
 
         // Auto-generate password
@@ -171,11 +168,6 @@ exports.uploadEmployeeImage = async (req, res) => {
             return res.status(404).json(formatResponse(false, 'Employee not found'));
         }
 
-        // Only "Pro" plan (2) employees can have images
-        if (employee.applicationPlanType !== 2 && employee.applicationPlanType !== '2') {
-            fs.unlinkSync(imageFile.path);
-            return res.status(403).json(formatResponse(false, 'Image upload is only allowed for Pro plan employees'));
-        }
 
         const descriptor = await faceService.getFaceDescriptor(imageFile.path);
         if (!descriptor) {

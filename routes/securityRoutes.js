@@ -1,10 +1,9 @@
 const express = require('express');
 const router = express.Router();
 const securityController = require('../controllers/securityController');
-const { protect } = require('../middleware/authMiddleware');
+// const { protect } = require('../middleware/authMiddleware'); // JWT disabled
 
-// All security dashboard routes are protected
-router.use(protect);
+// Security routes are open (JWT disabled)
 
 // @desc    Get security dashboard stats
 router.get('/stats', securityController.getSecurityStats);

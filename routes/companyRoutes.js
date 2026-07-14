@@ -3,15 +3,14 @@ const router = express.Router();
 const companyController = require('../controllers/companyController');
 const validateRequest = require('../middlewares/validateRequest');
 const { companySchema } = require('../validations/hrmsValidation');
-const { protect } = require('../middleware/authMiddleware');
+// const { protect } = require('../middleware/authMiddleware'); // JWT disabled
 
 // @desc    Login company
 // @route   POST /api/companies/login
 // @access  Public
 router.post('/login', companyController.loginCompany);
 
-// All company routes from here are protected (Admin only)
-router.use(protect);
+// Company routes are open (JWT disabled)
 
 // @desc    Get all companies/customers (with search & pagination)
 router.get('/getAllCompanies', companyController.getAllCompanies);

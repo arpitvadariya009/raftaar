@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const courierController = require('../controllers/courierController');
-const { protect } = require('../middleware/authMiddleware');
+// const { protect } = require('../middleware/authMiddleware'); // JWT disabled
 const multer = require('multer');
 const path = require('path');
 const crypto = require('crypto');
@@ -30,8 +30,7 @@ const upload = multer({
     }
 });
 
-// All courier routes are protected
-router.use(protect);
+// Courier routes are open (JWT disabled)
 
 // @desc    Create a new courier entry
 router.post('/createCourier', upload.single('image'), courierController.createCourier);

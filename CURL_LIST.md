@@ -18,7 +18,7 @@ curl -X POST http://localhost:5000/api/auth/loginUser \
 
 ---
 
-## 2. Companies / Customers (Protected)
+## 2. Companies / Customers ( ed)
 
 ### List Companies (Pagination/Search)
 ```bash
@@ -82,7 +82,7 @@ curl -X POST http://localhost:5000/api/companies/validateGST \
 
 ---
 
-## 3. Subscriptions (Protected)
+## 3. Subscriptions ( ed)
 
 ### Create Subscription
 ```bash
@@ -120,7 +120,7 @@ curl -X GET http://localhost:5000/api/subscriptions/getSubscriptionTypes \
 
 ---
 
-## 4. Notification Banners (Protected)
+## 4. Notification Banners ( ed)
 
 ### Create Banner
 ```bash
@@ -161,7 +161,7 @@ curl -X POST http://localhost:5000/api/notifications/uploadBannerImage \
 
 ## 5. Business Enquiries (Leads)
 
-### List Enquiries (Protected)
+### List Enquiries ( ed)
 ```bash
 curl -X GET http://localhost:5000/api/enquiries/getAllEnquiries \
 -H "Authorization: Bearer YOUR_TOKEN_HERE"
@@ -174,7 +174,7 @@ curl -X POST http://localhost:5000/api/enquiries/createEnquiry \
 -d '{"companyName":"Beta Inc","enquiryType":"New","description":"Need help","contactPhone":"1234567890","contactEmail":"beta@inc.com"}'
 ```
 
-### Respond to Enquiry (Protected)
+### Respond to Enquiry ( ed)
 ```bash
 curl -X PUT http://localhost:5000/api/enquiries/respondToEnquiry/ENQ_ID \
 -H "Authorization: Bearer YOUR_TOKEN_HERE" \
@@ -182,7 +182,7 @@ curl -X PUT http://localhost:5000/api/enquiries/respondToEnquiry/ENQ_ID \
 -d '{"responseMessage":"Call you tomorrow"}'
 ```
 
-### Convert to Customer (Protected)
+### Convert to Customer ( ed)
 ```bash
 curl -X POST http://localhost:5000/api/enquiries/convertToCustomer/ENQ_ID \
 -H "Authorization: Bearer YOUR_TOKEN_HERE"
@@ -255,7 +255,7 @@ curl -X POST http://localhost:1911/api/auth-employee/face-login \
 
 ---
 
-## 8. Dashboard (Protected)
+## 8. Dashboard ( ed)
 
 ### Dashboard Stats (Counts + Revenue)
 ```bash
@@ -278,7 +278,7 @@ curl -X GET "http://localhost:5000/api/dashboard/recent-enquiries?page=1&limit=5
 
 ---
 
-## 9. Gate Pass Management (Protected)
+## 9. Gate Pass Management ( ed)
 
 ### Apply for Gate Pass
 ```bash
@@ -326,7 +326,7 @@ curl -X GET "http://localhost:1911/api/attendance/log/EMP_ID?month=3&year=2026"
 
 ---
 
-## 11. Weekly Off Management (Protected)
+## 11. Weekly Off Management ( ed)
 
 ### Create Template
 ```bash
