@@ -125,7 +125,11 @@ exports.createEmployee = async (req, res) => {
         const Company = require('../models/Company');
         const companyDoc = await Company.findById(company);
         const companyCode = companyDoc ? companyDoc.companyCode : '';
-        const loginId = companyCode ? `${companyCode}-${newEmployee.employeeCode}` : newEmployee._id.toString();
+        let loginId = newEmployee._id.toString();
+        if (companyCode && newEmployee.employeeCode) {
+            const hasPrefix = newEmployee.employeeCode.toUpperCase().startsWith(`${companyCode.toUpperCase()}-`);
+            loginId = hasPrefix ? newEmployee.employeeCode : `${companyCode}-${newEmployee.employeeCode}`;
+        }
 
         mailService.sendEmail(
             email, 
@@ -446,7 +450,11 @@ exports.updateEmployee = async (req, res) => {
             const Company = require('../models/Company');
             const companyDoc = await Company.findById(employee.company);
             const companyCode = companyDoc ? companyDoc.companyCode : '';
-            const loginId = companyCode && employee.employeeCode ? `${companyCode}-${employee.employeeCode}` : employee._id.toString();
+            let loginId = employee._id.toString();
+            if (companyCode && employee.employeeCode) {
+                const hasPrefix = employee.employeeCode.toUpperCase().startsWith(`${companyCode.toUpperCase()}-`);
+                loginId = hasPrefix ? employee.employeeCode : `${companyCode}-${employee.employeeCode}`;
+            }
 
             mailService.sendEmail(
                 employee.email, 
@@ -490,54 +498,19 @@ exports.getEmployeeById = async (req, res) => {
     }
 };
 
-/**
- * Employee Login (ID and Password)
- * POST /api/auth-employee/login
- */
 exports.employeeLogin = async (req, res) => {
     try {
-        const { employeeId, companyCode: bodyCompanyCode, employeeCode: bodyEmployeeCode, password } = req.body;
+        const { employeeId, password } = req.body;
         const bcrypt = require('bcryptjs');
-        const mongoose = require('mongoose');
 
-        if ((!employeeId && (!bodyCompanyCode || !bodyEmployeeCode)) || !password) {
-            return res.status(400).json(formatResponse(false, 'Employee ID/Code and password are required'));
+        if (!employeeId || !password) {
+            return res.status(400).json(formatResponse(false, 'Employee ID and password are required'));
         }
 
-        let employee = null;
-
-        // 1. Try to find by direct ObjectId if valid
-        if (employeeId && mongoose.Types.ObjectId.isValid(employeeId)) {
-            employee = await AuthEmployee.findById(employeeId);
-        }
-
-        // 2. Try to find by companyCode + employeeCode (either combined or separate)
-        if (!employee) {
-            let companyCode = bodyCompanyCode;
-            let employeeCode = bodyEmployeeCode;
-
-            if (employeeId && employeeId.includes('-')) {
-                const parts = employeeId.split('-');
-                companyCode = parts[0].trim();
-                employeeCode = parts.slice(1).join('-').trim();
-            }
-
-            if (companyCode && employeeCode) {
-                const Company = mongoose.model('Company');
-                const company = await Company.findOne({ companyCode: companyCode.toUpperCase() });
-                if (company) {
-                    employee = await AuthEmployee.findOne({
-                        company: company._id,
-                        employeeCode: employeeCode.toUpperCase()
-                    });
-                }
-            }
-        }
-
-        // 3. Try to find by email
-        if (!employee && employeeId) {
-            employee = await AuthEmployee.findOne({ email: employeeId.toLowerCase() });
-        }
+        // Find employee strictly by matching their employeeCode (case-insensitive)
+        const employee = await AuthEmployee.findOne({
+            employeeCode: new RegExp(`^${employeeId.trim()}$`, 'i')
+        });
 
         if (!employee) {
             return res.status(401).json(formatResponse(false, 'Invalid credentials'));
@@ -593,7 +566,11 @@ exports.forgotPassword = async (req, res) => {
         const Company = require('../models/Company');
         const companyDoc = await Company.findById(employee.company);
         const companyCode = companyDoc ? companyDoc.companyCode : '';
-        const loginId = companyCode && employee.employeeCode ? `${companyCode}-${employee.employeeCode}` : employee._id.toString();
+        let loginId = employee._id.toString();
+        if (companyCode && employee.employeeCode) {
+            const hasPrefix = employee.employeeCode.toUpperCase().startsWith(`${companyCode.toUpperCase()}-`);
+            loginId = hasPrefix ? employee.employeeCode : `${companyCode}-${employee.employeeCode}`;
+        }
 
         await mailService.sendEmail(
             email,

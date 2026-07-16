@@ -9,9 +9,11 @@ const { getIO, emitToCompany } = require('../utils/socket');
 // ─── Helper: Offline threshold (10 minutes) ───────────────────────────────────
 const OFFLINE_THRESHOLD_MS = 10 * 60 * 1000;
 
-const isOnline = (lastLogTime) => {
+const isOnline = (lastLogTime, status = '') => {
     if (!lastLogTime) return false;
-    return (Date.now() - new Date(lastLogTime).getTime()) < OFFLINE_THRESHOLD_MS;
+    const isRecent = (Date.now() - new Date(lastLogTime).getTime()) < OFFLINE_THRESHOLD_MS;
+    const isPausedOrStopped = ['tracking paused', 'tracking stopped', 'checked out'].includes(status);
+    return isRecent && !isPausedOrStopped;
 };
 // ─────────────────────────────────────────────────────────────────────────────
 
@@ -113,7 +115,7 @@ exports.logLocation = asyncHandler(async (req, res) => {
                 placeName,
                 status,
                 batteryLevel,
-                isOnline: true,
+                isOnline: isOnline(log.createdAt, status),
                 lastUpdated: log.createdAt
             });
             // ─────────────────────────────────────────────────────────────
@@ -201,7 +203,7 @@ exports.getLiveLocations = asyncHandler(async (req, res) => {
             const emp = await AuthEmployee.findById(item._id)
                 .select('firstName lastName department photo employeeId');
 
-            const online = isOnline(item.lastLog.createdAt);
+            const online = isOnline(item.lastLog.createdAt, item.lastLog.status);
 
             return {
                 employeeId: item._id,
@@ -327,7 +329,7 @@ exports.getEmployeeStats = asyncHandler(async (req, res) => {
                     longitude: lastLog.longitude,
                     updatedAt: lastLog.createdAt
                 } : null,
-                isOnline: isOnline(lastLog?.createdAt)
+                isOnline: isOnline(lastLog?.createdAt, lastLog?.status)
             },
             timeline: logs.map(l => ({
                 _id: l._id,
