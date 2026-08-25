@@ -268,13 +268,16 @@ authEmployeeSchema.pre("save", async function () {
         const Company = mongoose.model("Company");
         const companyDoc = await Company.findById(this.company);
         const companyCode = companyDoc ? companyDoc.companyCode : "EMP";
+        const companyCodePrefix = companyCode.charAt(0).toUpperCase() + companyCode.slice(1).toLowerCase();
 
         const cleanFirstName = this.firstName
             .replace(/[^a-zA-Z]/g, '')
             .toUpperCase() || 'EMP';
 
-        // Find employees in the same company whose employeeCode matches name plus optional numbers
-        const regex = new RegExp(`^${cleanFirstName}(\\d+)?$`);
+        const baseCode = `${companyCodePrefix}-${cleanFirstName}`;
+
+        // Find employees in the same company whose employeeCode matches baseCode plus optional numbers
+        const regex = new RegExp(`^${baseCode}(\\d+)?$`);
         const siblings = await this.constructor.find({ 
             company: this.company,
             employeeCode: regex
@@ -285,7 +288,7 @@ authEmployeeSchema.pre("save", async function () {
 
         siblings.forEach(sib => {
             if (sib.employeeCode) {
-                const match = sib.employeeCode.match(new RegExp(`^${cleanFirstName}(\\d+)?$`));
+                const match = sib.employeeCode.match(new RegExp(`^${baseCode}(\\d+)?$`));
                 if (match) {
                     if (match[1]) {
                         const num = parseInt(match[1]);
@@ -298,10 +301,11 @@ authEmployeeSchema.pre("save", async function () {
         });
 
         if (!exactMatchFound && siblings.length === 0) {
-            this.employeeCode = cleanFirstName;
+            this.employeeCode = baseCode;
         } else {
-            const nextNum = maxNumber > 0 ? maxNumber + 1 : 2;
-            this.employeeCode = `${cleanFirstName}${nextNum}`;
+            const nextNum = maxNumber > 0 ? maxNumber + 1 : 1;
+            const paddedNum = String(nextNum).padStart(2, '0');
+            this.employeeCode = `${baseCode}${paddedNum}`;
         }
     }
 
