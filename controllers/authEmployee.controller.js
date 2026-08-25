@@ -85,7 +85,7 @@ exports.createEmployee = async (req, res) => {
 
             // Face uniqueness check across all registered employees
             const allEmployees = await AuthEmployee.find({ descriptor: { $exists: true, $ne: [] } });
-            const threshold = process.env.FACE_SIMILARITY_THRESHOLD || 0.6;
+            const threshold = process.env.FACE_SIMILARITY_THRESHOLD ? parseFloat(process.env.FACE_SIMILARITY_THRESHOLD) : 0.15;
 
             for (const emp of allEmployees) {
                 const storedDescriptor = new Float32Array(emp.descriptor);
@@ -181,7 +181,7 @@ exports.uploadEmployeeImage = async (req, res) => {
 
         // Face uniqueness check
         const allEmployees = await AuthEmployee.find({ _id: { $ne: id }, descriptor: { $exists: true, $ne: [] } });
-        const threshold = process.env.FACE_SIMILARITY_THRESHOLD || 0.6;
+        const threshold = process.env.FACE_SIMILARITY_THRESHOLD ? parseFloat(process.env.FACE_SIMILARITY_THRESHOLD) : 0.15;
 
         for (const emp of allEmployees) {
             const storedDescriptor = new Float32Array(emp.descriptor);
@@ -336,7 +336,7 @@ exports.getFaceData = async (req, res) => {
 
         let bestMatch = null;
         let minDistance = Infinity;
-        const threshold = process.env.FACE_SIMILARITY_THRESHOLD || 0.6;
+        const threshold = process.env.FACE_SIMILARITY_THRESHOLD ? parseFloat(process.env.FACE_SIMILARITY_THRESHOLD) : 0.15;
 
         // Find the best matching face
         for (const employee of allEmployees) {

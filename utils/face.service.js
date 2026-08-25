@@ -82,7 +82,7 @@ function getEuclideanDistance(descriptor1, descriptor2) {
 /**
  * Checks if face is a match based on threshold.
  */
-function isMatch(distance, threshold = 0.6) {
+function isMatch(distance, threshold = 0.15) {
     return distance < threshold;
 }
 

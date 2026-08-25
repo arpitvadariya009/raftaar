@@ -107,8 +107,8 @@ exports.verifyFace = async (req, res) => {
         const storedDescriptor = new Float32Array(storedFace.descriptor);
         const distance = faceService.getEuclideanDistance(queryDescriptor, storedDescriptor);
 
-        // Define threshold
-        const threshold = process.env.FACE_SIMILARITY_THRESHOLD || 0.6;
+        // Define threshold (0.15 distance corresponds to 85% confidence threshold)
+        const threshold = process.env.FACE_SIMILARITY_THRESHOLD ? parseFloat(process.env.FACE_SIMILARITY_THRESHOLD) : 0.15;
         const matched = distance < threshold;
 
         // Calculate confidence
@@ -168,7 +168,7 @@ exports.faceLogin = async (req, res) => {
 
         let bestMatch = null;
         let minDistance = Infinity;
-        const threshold = process.env.FACE_SIMILARITY_THRESHOLD || 0.6;
+        const threshold = process.env.FACE_SIMILARITY_THRESHOLD ? parseFloat(process.env.FACE_SIMILARITY_THRESHOLD) : 0.15;
 
         for (const face of allFaces) {
             const storedDescriptor = new Float32Array(face.descriptor);
@@ -252,7 +252,7 @@ exports.markFaceAttendance = async (req, res) => {
 
         let bestMatch = null;
         let minDistance = Infinity;
-        const threshold = process.env.FACE_SIMILARITY_THRESHOLD || 0.6;
+        const threshold = process.env.FACE_SIMILARITY_THRESHOLD ? parseFloat(process.env.FACE_SIMILARITY_THRESHOLD) : 0.15;
 
         for (const emp of employees) {
             if (!emp.descriptor || emp.descriptor.length !== 128) continue;
